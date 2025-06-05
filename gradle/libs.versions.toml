@@ -1,0 +1,144 @@
+[versions]
+# Java & Kotlin
+java = "17"
+kotlin = "1.9.22"
+
+# Spring Framework
+spring-boot = "3.2.2"
+spring-cloud = "2023.0.0"
+spring-kafka = "3.1.1"
+spring-security = "6.2.1"
+
+# Database
+postgresql = "42.7.1"
+redis = "4.4.6"
+h2 = "2.2.224"
+
+# AI & ML Libraries
+langchain4j = "0.25.0"
+openai-java = "0.18.2"
+autogen = "0.2.0"
+semantic-kernel = "1.0.0"
+
+# Communication & Networking
+netty = "4.1.106.Final"
+websocket = "2.1.4"
+grpc = "1.60.1"
+
+# Serialization & Data Processing
+jackson = "2.16.1"
+gson = "2.10.1"
+protobuf = "3.25.2"
+
+# Monitoring & Observability
+micrometer = "1.12.2"
+prometheus = "1.12.2"
+zipkin = "2.24.3"
+
+# Testing
+junit = "5.10.1"
+mockito = "5.8.0"
+testcontainers = "1.19.3"
+wiremock = "3.3.1"
+
+# Build & Deployment
+jib = "3.4.0"
+docker-compose = "0.17.6"
+
+# Utilities
+apache-commons = "3.14.0"
+guava = "32.1.3-jre"
+slf4j = "2.0.9"
+logback = "1.4.14"
+
+[libraries]
+# Spring Boot Starters
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "spring-boot" }
+spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis", version.ref = "spring-boot" }
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "spring-boot" }
+spring-boot-starter-websocket = { module = "org.springframework.boot:spring-boot-starter-websocket", version.ref = "spring-boot" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator", version.ref = "spring-boot" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
+
+# Spring Cloud
+spring-cloud-starter-gateway = { module = "org.springframework.cloud:spring-cloud-starter-gateway", version.ref = "spring-cloud" }
+spring-cloud-starter-config = { module = "org.springframework.cloud:spring-cloud-starter-config", version.ref = "spring-cloud" }
+spring-cloud-starter-netflix-eureka-server = { module = "org.springframework.cloud:spring-cloud-starter-netflix-eureka-server", version.ref = "spring-cloud" }
+spring-cloud-starter-netflix-eureka-client = { module = "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client", version.ref = "spring-cloud" }
+
+# Database
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+redis-jedis = { module = "redis.clients:jedis", version.ref = "redis" }
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
+
+# AI & ML
+langchain4j-core = { module = "dev.langchain4j:langchain4j", version.ref = "langchain4j" }
+langchain4j-openai = { module = "dev.langchain4j:langchain4j-open-ai", version.ref = "langchain4j" }
+openai-java = { module = "com.theokanning.openai-gpt3-java:service", version.ref = "openai-java" }
+
+# Networking
+netty-all = { module = "io.netty:netty-all", version.ref = "netty" }
+spring-kafka = { module = "org.springframework.kafka:spring-kafka", version.ref = "spring-kafka" }
+grpc-netty = { module = "io.grpc:grpc-netty", version.ref = "grpc" }
+grpc-protobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
+grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
+
+# Serialization
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
+
+# Monitoring
+micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
+micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "prometheus" }
+zipkin-brave = { module = "io.zipkin.brave:brave", version.ref = "zipkin" }
+
+# Testing
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
+wiremock = { module = "com.github.tomakehurst:wiremock-jre8", version.ref = "wiremock" }
+
+# Utilities
+apache-commons-lang = { module = "org.apache.commons:commons-lang3", version.ref = "apache-commons" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+[bundles]
+# Spring Boot Web Bundle
+spring-web = ["spring-boot-starter-web", "spring-boot-starter-actuator"]
+
+# Database Bundle
+database = ["spring-boot-starter-data-jpa", "postgresql", "spring-boot-starter-data-redis"]
+
+# AI Bundle
+ai-core = ["langchain4j-core", "langchain4j-openai", "openai-java"]
+
+# Testing Bundle
+testing = ["spring-boot-starter-test", "junit-jupiter", "mockito-core", "testcontainers-junit"]
+
+# Monitoring Bundle
+monitoring = ["micrometer-core", "micrometer-prometheus", "zipkin-brave"]
+
+[plugins]
+# Kotlin
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+kotlin-jpa = { id = "org.jetbrains.kotlin.plugin.jpa", version.ref = "kotlin" }
+
+# Spring
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version = "1.1.4" }
+
+# Build & Deployment
+jib = { id = "com.google.cloud.tools.jib", version.ref = "jib" }
+docker-compose = { id = "com.avast.gradle.docker-compose", version.ref = "docker-compose" }
+
+# Code Quality
+spotless = { id = "com.diffplug.spotless", version = "6.23.3" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.4" } 
