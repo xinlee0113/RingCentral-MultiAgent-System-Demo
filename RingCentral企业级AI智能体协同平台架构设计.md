@@ -986,203 +986,435 @@ note right of ZeroTrust : 企业级安全架构\n最小权限原则
 ## 4. 详细设计 (Detailed Design)
 
 ### 4.1 工程结构设计
+
+**模块化Gradle多项目架构**：
+
 ```text
 RingCentral-MultiAgent-System/
-├── docs/                                    # 项目文档
-│   ├── architecture/                        # 架构设计文档
-│   │   ├── system-design.md                # 系统设计文档
-│   │   ├── api-specification.md            # API规范文档
-│   │   └── deployment-guide.md             # 部署指南
-│   ├── api/                                # API文档
-│   │   ├── openapi.yaml                    # OpenAPI规范
-│   │   ├── graphql-schema.graphql          # GraphQL模式
-│   │   └── websocket-events.md             # WebSocket事件文档
-│   └── deployment/                         # 部署文档
-│       ├── kubernetes-manifests.yaml       # K8s部署清单
-│       ├── docker-compose.yml              # Docker编排文件
-│       └── terraform-scripts.tf            # Terraform脚本
+├── settings.gradle.kts                     # Gradle设置文件
+├── build.gradle.kts                        # 根项目构建文件
+├── gradle.properties                       # Gradle属性配置
+├── gradlew                                 # Gradle Wrapper (Unix)
+├── gradlew.bat                             # Gradle Wrapper (Windows)
+├── gradle/
+│   └── wrapper/
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
 │
-├── backend/                                # 后端服务 (Java/Kotlin)
-│   ├── agent-services/                     # 智能体服务
-│   │   ├── meeting-agent/                  # 会议智能体
-│   │   │   ├── MeetingAgentApplication.java
-│   │   │   ├── MeetingController.java
-│   │   │   ├── TranscriptionService.java
-│   │   │   └── SummaryService.java
-│   │   ├── call-agent/                     # 通话智能体
-│   │   │   ├── CallAgentApplication.java
-│   │   │   ├── CallController.java
-│   │   │   ├── EmotionAnalysisService.java
-│   │   │   └── QualityMonitorService.java
-│   │   ├── router-agent/                   # 路由智能体
-│   │   │   ├── RouterAgentApplication.java
-│   │   │   ├── RoutingController.java
-│   │   │   ├── LoadBalancerService.java
-│   │   │   └── CoordinationService.java
-│   │   └── analytics-agent/                # 分析智能体
-│   │       ├── AnalyticsAgentApplication.java
-│   │       ├── AnalyticsController.java
-│   │       ├── InsightService.java
-│   │       └── ReportService.java
+├── buildSrc/                               # 构建逻辑模块
+│   ├── build.gradle.kts
+│   └── src/main/kotlin/
+│       ├── Dependencies.kt                 # 依赖版本管理
+│       ├── Versions.kt                     # 版本号统一管理
+│       └── plugins/                        # 自定义Gradle插件
+│           ├── java-conventions.gradle.kts
+│           ├── kotlin-conventions.gradle.kts
+│           └── spring-conventions.gradle.kts
+│
+├── docs/                                   # 项目文档
+│   ├── architecture/                       # 架构设计文档
+│   ├── api/                                # API文档
+│   └── deployment/                         # 部署文档
+│
+├── shared/                                 # 共享模块
+│   ├── build.gradle.kts
+│   └── src/main/
+│       ├── java/com/ringcentral/shared/
+│       │   ├── common/                     # 通用工具类
+│       │   │   ├── BaseEntity.java
+│       │   │   ├── ResponseWrapper.java
+│       │   │   ├── ExceptionHandler.java
+│       │   │   └── ValidationUtils.java
+│       │   ├── domain/                     # 领域模型
+│       │   │   ├── User.java
+│       │   │   ├── Meeting.java
+│       │   │   ├── Call.java
+│       │   │   └── AgentSession.java
+│       │   ├── dto/                        # 数据传输对象
+│       │   │   ├── MeetingDto.java
+│       │   │   ├── CallDto.java
+│       │   │   └── AgentSessionDto.java
+│       │   ├── enums/                      # 枚举类型
+│       │   │   ├── AgentType.java
+│       │   │   ├── SessionStatus.java
+│       │   │   └── ProcessingStatus.java
+│       │   └── constants/                  # 常量定义
+│       │       ├── ApiConstants.java
+│       │       └── ConfigConstants.java
+│       └── resources/
+│           └── application-shared.yml
+│
+├── infrastructure/                         # 基础设施模块
+│   ├── build.gradle.kts
+│   └── src/main/
+│       ├── java/com/ringcentral/infrastructure/
+│       │   ├── config/                     # 配置类
+│       │   │   ├── DatabaseConfig.java
+│       │   │   ├── RedisConfig.java
+│       │   │   ├── QDrantConfig.java
+│       │   │   └── KafkaConfig.java
+│       │   ├── clients/                    # 外部客户端
+│       │   │   ├── OpenAIClient.java
+│       │   │   ├── AzureOpenAIClient.java
+│       │   │   ├── QDrantClient.java
+│       │   │   └── RingCentralClient.java
+│       │   ├── messaging/                  # 消息处理
+│       │   │   ├── KafkaProducer.java
+│       │   │   ├── KafkaConsumer.java
+│       │   │   └── MessageHandler.java
+│       │   └── security/                   # 安全配置
+│       │       ├── SecurityConfig.java
+│       │       ├── JwtTokenProvider.java
+│       │       └── OAuth2Config.java
+│       └── resources/
+│           └── application-infrastructure.yml
+│
+├── platform-services/                     # 平台服务模块
+│   ├── api-gateway/                        # API网关服务
+│   │   ├── build.gradle.kts
+│   │   └── src/main/
+│   │       ├── java/com/ringcentral/gateway/
+│   │       │   ├── GatewayApplication.java
+│   │       │   ├── config/
+│   │       │   │   ├── RouteConfiguration.java
+│   │       │   │   └── SecurityConfiguration.java
+│   │       │   ├── filter/
+│   │       │   │   ├── AuthenticationFilter.java
+│   │       │   │   ├── RateLimitingFilter.java
+│   │       │   │   └── LoggingFilter.java
+│   │       │   └── handler/
+│   │       │       ├── ErrorHandler.java
+│   │       │       └── HealthHandler.java
+│   │       └── resources/
+│   │           ├── application.yml
+│   │           └── bootstrap.yml
 │   │
-│   ├── ai-engines/                         # AI引擎 (LangChain/AutoGen)
-│   │   ├── speech-engine/                  # 语音处理引擎
-│   │   │   ├── SpeechEngineApplication.java
-│   │   │   ├── ASRService.java
-│   │   │   ├── TTSService.java
-│   │   │   └── SpeakerIdentificationService.java
-│   │   ├── nlu-engine/                     # 自然语言理解引擎
-│   │   │   ├── NLUEngineApplication.java
-│   │   │   ├── IntentRecognitionService.java
-│   │   │   ├── EntityExtractionService.java
-│   │   │   └── LangChainIntegration.java
-│   │   ├── knowledge-engine/               # 知识引擎 (qDrant)
-│   │   │   ├── KnowledgeEngineApplication.java
-│   │   │   ├── VectorSearchService.java
-│   │   │   ├── RAGPipelineService.java
-│   │   │   └── QDrantIntegration.java
-│   │   └── reasoning-engine/               # 推理引擎 (AutoGen)
-│   │       ├── ReasoningEngineApplication.java
-│   │       ├── ChainOfThoughtService.java
-│   │       ├── AutoGenIntegration.java
-│   │       └── PromptEngineeringService.java
+│   ├── auth-service/                       # 认证授权服务
+│   │   ├── build.gradle.kts
+│   │   └── src/main/
+│   │       ├── java/com/ringcentral/auth/
+│   │       │   ├── AuthServiceApplication.java
+│   │       │   ├── controller/
+│   │       │   │   ├── AuthController.java
+│   │       │   │   └── UserController.java
+│   │       │   ├── service/
+│   │       │   │   ├── AuthService.java
+│   │       │   │   ├── JwtTokenService.java
+│   │       │   │   ├── OAuth2Service.java
+│   │       │   │   └── RBACService.java
+│   │       │   ├── repository/
+│   │       │   │   ├── UserRepository.java
+│   │       │   │   └── PermissionRepository.java
+│   │       │   └── config/
+│   │       │       ├── OAuth2Configuration.java
+│   │       │       └── SecurityConfiguration.java
+│   │       └── resources/
+│   │           └── application.yml
 │   │
-│   ├── platform-services/                 # 平台基础服务 (Spring Boot/Cloud)
-│   │   ├── api-gateway/                    # API网关
-│   │   │   ├── GatewayApplication.java
-│   │   │   ├── RouteConfiguration.java
-│   │   │   ├── AuthenticationFilter.java
-│   │   │   └── RateLimitingFilter.java
-│   │   ├── auth-service/                   # 认证服务 (OAuth 2.0/JWT)
-│   │   │   ├── AuthServiceApplication.java
-│   │   │   ├── OAuth2Configuration.java
-│   │   │   ├── JWTTokenService.java
-│   │   │   └── RBACService.java
-│   │   ├── config-service/                 # 配置服务
-│   │   │   ├── ConfigServiceApplication.java
-│   │   │   ├── ConfigurationController.java
-│   │   │   └── EnvironmentService.java
-│   │   └── monitor-service/                # 监控服务
-│   │       ├── MonitorServiceApplication.java
-│   │       ├── MetricsCollector.java
-│   │       ├── AlertingService.java
-│   │       └── HealthCheckService.java
+│   ├── config-service/                     # 配置管理服务
+│   │   ├── build.gradle.kts
+│   │   └── src/main/
+│   │       ├── java/com/ringcentral/config/
+│   │       │   ├── ConfigServiceApplication.java
+│   │       │   ├── controller/
+│   │       │   │   └── ConfigurationController.java
+│   │       │   ├── service/
+│   │       │   │   ├── ConfigurationService.java
+│   │       │   │   └── EnvironmentService.java
+│   │       │   └── repository/
+│   │       │       └── ConfigurationRepository.java
+│   │       └── resources/
+│   │           └── application.yml
 │   │
-│   └── shared/                             # 共享组件
-│       ├── common/                         # 通用工具
-│       │   ├── BaseEntity.java
-│       │   ├── ResponseWrapper.java
-│       │   ├── ExceptionHandler.java
-│       │   └── ValidationUtils.java
-│       ├── models/                         # 数据模型
-│       │   ├── User.java
-│       │   ├── Meeting.java
-│       │   ├── Call.java
-│       │   └── AgentSession.java
-│       └── clients/                        # 外部客户端
-│           ├── OpenAIClient.java           # OpenAI客户端
-│           ├── AzureOpenAIClient.java      # Azure OpenAI客户端
-│           ├── QDrantClient.java           # qDrant客户端 (JD要求)
-│           └── PostgreSQLClient.java       # PostgreSQL客户端 (JD要求)
+│   └── monitor-service/                    # 监控服务
+│       ├── build.gradle.kts
+│       └── src/main/
+│           ├── java/com/ringcentral/monitor/
+│           │   ├── MonitorServiceApplication.java
+│           │   ├── controller/
+│           │   │   ├── MetricsController.java
+│           │   │   └── HealthController.java
+│           │   ├── service/
+│           │   │   ├── MetricsCollector.java
+│           │   │   ├── AlertingService.java
+│           │   │   └── HealthCheckService.java
+│           │   └── config/
+│           │       ├── PrometheusConfig.java
+│           │       └── AlertingConfig.java
+│           └── resources/
+│               └── application.yml
+│
+├── ai-engines/                             # AI引擎模块
+│   ├── speech-engine/                      # 语音处理引擎
+│   │   ├── build.gradle.kts
+│   │   └── src/main/
+│   │       ├── java/com/ringcentral/speech/
+│   │       │   ├── SpeechEngineApplication.java
+│   │       │   ├── controller/
+│   │       │   │   ├── ASRController.java
+│   │       │   │   └── TTSController.java
+│   │       │   ├── service/
+│   │       │   │   ├── ASRService.java
+│   │       │   │   ├── TTSService.java
+│   │       │   │   ├── SpeakerIdentificationService.java
+│   │       │   │   └── AudioProcessingService.java
+│   │       │   ├── integration/
+│   │       │   │   ├── WhisperIntegration.java
+│   │       │   │   └── AzureSpeechIntegration.java
+│   │       │   └── config/
+│   │       │       ├── SpeechConfig.java
+│   │       │       └── NettyConfig.java
+│   │       └── resources/
+│   │           └── application.yml
+│   │
+│   ├── nlu-engine/                         # 自然语言理解引擎
+│   │   ├── build.gradle.kts
+│   │   └── src/main/
+│   │       ├── java/com/ringcentral/nlu/
+│   │       │   ├── NLUEngineApplication.java
+│   │       │   ├── controller/
+│   │       │   │   ├── IntentController.java
+│   │       │   │   └── EntityController.java
+│   │       │   ├── service/
+│   │       │   │   ├── IntentRecognitionService.java
+│   │       │   │   ├── EntityExtractionService.java
+│   │       │   │   └── SentimentAnalysisService.java
+│   │       │   ├── integration/
+│   │       │   │   ├── LangChainIntegration.java
+│   │       │   │   ├── OpenAIIntegration.java
+│   │       │   │   └── HuggingFaceIntegration.java
+│   │       │   └── config/
+│   │       │       ├── NLUConfig.java
+│   │       │       └── ModelConfig.java
+│   │       └── resources/
+│   │           └── application.yml
+│   │
+│   ├── knowledge-engine/                   # 知识引擎
+│   │   ├── build.gradle.kts
+│   │   └── src/main/
+│   │       ├── java/com/ringcentral/knowledge/
+│   │       │   ├── KnowledgeEngineApplication.java
+│   │       │   ├── controller/
+│   │       │   │   ├── VectorSearchController.java
+│   │       │   │   └── RAGController.java
+│   │       │   ├── service/
+│   │       │   │   ├── VectorSearchService.java
+│   │       │   │   ├── RAGPipelineService.java
+│   │       │   │   ├── EmbeddingService.java
+│   │       │   │   └── KnowledgeBaseService.java
+│   │       │   ├── integration/
+│   │       │   │   ├── QDrantIntegration.java
+│   │       │   │   ├── LlamaIndexIntegration.java
+│   │       │   │   └── OpenAIEmbeddingIntegration.java
+│   │       │   └── config/
+│   │       │       ├── QDrantConfig.java
+│   │       │       └── VectorConfig.java
+│   │       └── resources/
+│   │           └── application.yml
+│   │
+│   └── reasoning-engine/                   # 推理引擎
+│       ├── build.gradle.kts
+│       └── src/main/
+│           ├── java/com/ringcentral/reasoning/
+│           │   ├── ReasoningEngineApplication.java
+│           │   ├── controller/
+│           │   │   ├── ReasoningController.java
+│           │   │   └── PromptController.java
+│           │   ├── service/
+│           │   │   ├── ChainOfThoughtService.java
+│           │   │   ├── PromptEngineeringService.java
+│           │   │   ├── ReasoningService.java
+│           │   │   └── ContextSwitchingService.java
+│           │   ├── integration/
+│           │   │   ├── AutoGenIntegration.java
+│           │   │   ├── LangChainIntegration.java
+│           │   │   └── MultiLLMIntegration.java
+│           │   └── config/
+│           │       ├── AutoGenConfig.java
+│           │       └── LLMConfig.java
+│           └── resources/
+│               └── application.yml
+│
+├── agent-services/                         # 智能体服务模块
+│   ├── meeting-agent/                      # 会议智能体
+│   │   ├── build.gradle.kts
+│   │   └── src/main/
+│   │       ├── java/com/ringcentral/meeting/
+│   │       │   ├── MeetingAgentApplication.java
+│   │       │   ├── controller/
+│   │       │   │   ├── MeetingController.java
+│   │       │   │   └── TranscriptionController.java
+│   │       │   ├── service/
+│   │       │   │   ├── MeetingAgentService.java
+│   │       │   │   ├── TranscriptionService.java
+│   │       │   │   ├── SummaryService.java
+│   │       │   │   └── ParticipantAnalysisService.java
+│   │       │   ├── agent/
+│   │       │   │   ├── MeetingAgent.java
+│   │       │   │   ├── TranscriptionAgent.java
+│   │       │   │   └── SummaryAgent.java
+│   │       │   ├── websocket/
+│   │       │   │   ├── MeetingWebSocketHandler.java
+│   │       │   │   └── RealTimeProcessor.java
+│   │       │   └── config/
+│   │       │       ├── MeetingConfig.java
+│   │       │       └── WebSocketConfig.java
+│   │       └── resources/
+│   │           └── application.yml
+│   │
+│   ├── call-agent/                         # 通话智能体
+│   │   ├── build.gradle.kts
+│   │   └── src/main/
+│   │       ├── java/com/ringcentral/call/
+│   │       │   ├── CallAgentApplication.java
+│   │       │   ├── controller/
+│   │       │   │   ├── CallController.java
+│   │       │   │   └── EmotionController.java
+│   │       │   ├── service/
+│   │       │   │   ├── CallAgentService.java
+│   │       │   │   ├── EmotionAnalysisService.java
+│   │       │   │   ├── QualityMonitorService.java
+│   │       │   │   └── CallInsightService.java
+│   │       │   ├── agent/
+│   │       │   │   ├── CallAgent.java
+│   │       │   │   ├── EmotionAgent.java
+│   │       │   │   └── QualityAgent.java
+│   │       │   ├── streaming/
+│   │       │   │   ├── AudioStreamHandler.java
+│   │       │   │   └── RealTimeAnalyzer.java
+│   │       │   └── config/
+│   │       │       ├── CallConfig.java
+│   │       │       └── StreamingConfig.java
+│   │       └── resources/
+│   │           └── application.yml
+│   │
+│   ├── router-agent/                       # 路由智能体
+│   │   ├── build.gradle.kts
+│   │   └── src/main/
+│   │       ├── java/com/ringcentral/router/
+│   │       │   ├── RouterAgentApplication.java
+│   │       │   ├── controller/
+│   │       │   │   ├── RoutingController.java
+│   │       │   │   └── LoadBalancerController.java
+│   │       │   ├── service/
+│   │       │   │   ├── RouterAgentService.java
+│   │       │   │   ├── LoadBalancerService.java
+│   │       │   │   ├── CoordinationService.java
+│   │       │   │   └── HealthMonitorService.java
+│   │       │   ├── agent/
+│   │       │   │   ├── RouterAgent.java
+│   │       │   │   ├── LoadBalancerAgent.java
+│   │       │   │   └── CoordinatorAgent.java
+│   │       │   ├── algorithm/
+│   │       │   │   ├── LoadBalancingAlgorithm.java
+│   │       │   │   ├── RoutingAlgorithm.java
+│   │       │   │   └── HealthCheckAlgorithm.java
+│   │       │   └── config/
+│   │       │       ├── RouterConfig.java
+│   │       │       └── LoadBalancerConfig.java
+│   │       └── resources/
+│   │           └── application.yml
+│   │
+│   └── analytics-agent/                    # 分析智能体
+│       ├── build.gradle.kts
+│       └── src/main/
+│           ├── java/com/ringcentral/analytics/
+│           │   ├── AnalyticsAgentApplication.java
+│           │   ├── controller/
+│           │   │   ├── AnalyticsController.java
+│           │   │   └── InsightController.java
+│           │   ├── service/
+│           │   │   ├── AnalyticsAgentService.java
+│           │   │   ├── InsightService.java
+│           │   │   ├── ReportService.java
+│           │   │   └── PredictionService.java
+│           │   ├── agent/
+│           │   │   ├── AnalyticsAgent.java
+│           │   │   ├── InsightAgent.java
+│           │   │   └── ReportAgent.java
+│           │   ├── ml/
+│           │   │   ├── ModelTrainer.java
+│           │   │   ├── FeatureExtractor.java
+│           │   │   └── Predictor.java
+│           │   └── config/
+│           │       ├── AnalyticsConfig.java
+│           │       └── MLConfig.java
+│           └── resources/
+│               └── application.yml
 │
 ├── frontend/                               # 前端应用
 │   ├── web-portal/                         # Web门户
 │   │   ├── package.json
-│   │   ├── App.tsx
-│   │   ├── components/
-│   │   └── services/
+│   │   ├── webpack.config.js
+│   │   └── src/
 │   ├── mobile-app/                         # 移动应用
 │   │   ├── package.json
-│   │   ├── App.tsx
-│   │   ├── screens/
-│   │   └── services/
-│   └── shared-components/                  # 共享组件
-│       ├── UI-Library.tsx
-│       ├── API-Client.ts
-│       └── WebSocket-Client.ts
+│   │   └── src/
+│   └── shared-ui/                          # 共享UI组件
+│       ├── package.json
+│       └── src/
 │
-├── ai-models/                              # AI模型
-│   ├── training/                           # 模型训练
-│   │   ├── train_emotion_model.py
-│   │   ├── train_summarization_model.py
-│   │   └── model_evaluation.py
-│   ├── inference/                          # 模型推理
-│   │   ├── model_server.py
-│   │   ├── batch_inference.py
-│   │   └── real_time_inference.py
-│   └── datasets/                           # 数据集
-│       ├── meeting_transcripts.json
-│       ├── call_recordings.wav
-│       └── emotion_labels.csv
-│
-├── infrastructure/                         # 基础设施 (云原生)
+├── deployment/                             # 部署配置
+│   ├── docker/                             # Docker配置
+│   │   ├── Dockerfile.base                 # 基础镜像
+│   │   ├── Dockerfile.agent                # 智能体服务镜像
+│   │   ├── Dockerfile.engine               # AI引擎镜像
+│   │   ├── Dockerfile.platform             # 平台服务镜像
+│   │   └── docker-compose.yml
 │   ├── kubernetes/                         # Kubernetes配置
 │   │   ├── namespace.yaml
-│   │   ├── deployments.yaml
-│   │   ├── services.yaml
-│   │   ├── ingress.yaml
-│   │   ├── configmaps.yaml
-│   │   └── secrets.yaml
-│   ├── docker/                             # Docker配置
-│   │   ├── Dockerfile.agent
-│   │   ├── Dockerfile.engine
-│   │   ├── Dockerfile.platform
-│   │   └── docker-compose.yml
+│   │   ├── configmap.yaml
+│   │   ├── secret.yaml
+│   │   ├── deployment.yaml
+│   │   ├── service.yaml
+│   │   └── ingress.yaml
 │   ├── terraform/                          # Terraform配置
 │   │   ├── main.tf
 │   │   ├── variables.tf
-│   │   ├── outputs.tf
 │   │   └── modules/
-│   └── monitoring/                         # 监控配置
-│       ├── prometheus.yml
-│       ├── grafana-dashboards.json
-│       └── alertmanager.yml
+│   └── helm/                               # Helm Charts
+│       ├── Chart.yaml
+│       ├── values.yaml
+│       └── templates/
 │
 ├── scripts/                                # 脚本工具
-│   ├── build/                              # 构建脚本
-│   │   ├── build.sh
-│   │   ├── package.sh
-│   │   └── test.sh
-│   ├── deploy/                             # 部署脚本
+│   ├── build/
+│   │   ├── build-all.sh                    # 构建所有模块
+│   │   ├── build-agents.sh                 # 构建智能体服务
+│   │   ├── build-engines.sh                # 构建AI引擎
+│   │   └── build-platform.sh               # 构建平台服务
+│   ├── deploy/
 │   │   ├── deploy-dev.sh
 │   │   ├── deploy-staging.sh
 │   │   └── deploy-prod.sh
-│   └── migration/                          # 数据迁移
-│       ├── db-migration.sql
-│       ├── data-migration.py
-│       └── vector-migration.py
+│   └── test/
+│       ├── run-unit-tests.sh
+│       ├── run-integration-tests.sh
+│       └── run-e2e-tests.sh
 │
-├── tests/                                  # 测试套件
-│   ├── unit/                               # 单元测试
-│   │   ├── AgentServiceTest.java
-│   │   ├── EngineServiceTest.java
-│   │   └── PlatformServiceTest.java
-│   ├── integration/                        # 集成测试
-│   │   ├── APIIntegrationTest.java
-│   │   ├── DatabaseIntegrationTest.java
-│   │   └── LLMIntegrationTest.java
-│   ├── e2e/                                # 端到端测试
-│   │   ├── MeetingWorkflowTest.java
-│   │   ├── CallAnalysisWorkflowTest.java
-│   │   └── UserJourneyTest.java
-│   └── performance/                        # 性能测试
-│       ├── LoadTest.java
-│       ├── StressTest.java
-│       └── ConcurrencyTest.java
+├── tests/                                  # 测试模块
+│   ├── unit-tests/                         # 单元测试
+│   │   ├── build.gradle.kts
+│   │   └── src/test/java/
+│   ├── integration-tests/                  # 集成测试
+│   │   ├── build.gradle.kts
+│   │   └── src/test/java/
+│   ├── e2e-tests/                          # 端到端测试
+│   │   ├── build.gradle.kts
+│   │   └── src/test/java/
+│   └── performance-tests/                  # 性能测试
+│       ├── build.gradle.kts
+│       └── src/test/java/
 │
 ├── .github/                                # GitHub配置
-│   └── workflows/                          # CI/CD工作流
-│       ├── ci.yml                          # 持续集成
-│       ├── cd.yml                          # 持续部署
-│       ├── security-scan.yml               # 安全扫描
-│       └── performance-test.yml            # 性能测试
+│   └── workflows/
+│       ├── ci.yml
+│       ├── cd.yml
+│       └── release.yml
 │
-├── docker-compose.yml                      # Docker编排文件
 ├── README.md                               # 项目说明
 ├── LICENSE                                 # 开源许可证
-├── .gitignore                              # Git忽略文件
-├── pom.xml                                 # Maven配置 (Java)
-└── gradle.build                            # Gradle配置 (Kotlin)
+└── .gitignore                              # Git忽略文件
 ```
 
 **🎯 工程结构设计亮点**：
@@ -1193,6 +1425,618 @@ RingCentral-MultiAgent-System/
 - **☁️ 云原生架构**：Kubernetes、Docker、Terraform完整配置
 - **🧪 测试体系完备**：单元、集成、端到端、性能测试全覆盖
 - **🔄 CI/CD自动化**：GitHub Actions完整的构建部署流程
+
+**Gradle构建配置详解**：
+
+#### **根项目构建配置 (build.gradle.kts)**
+
+```kotlin
+plugins {
+    id("org.springframework.boot") version "3.2.0" apply false
+    id("io.spring.dependency-management") version "1.1.4" apply false
+    kotlin("jvm") version "1.9.20" apply false
+    kotlin("plugin.spring") version "1.9.20" apply false
+    kotlin("plugin.jpa") version "1.9.20" apply false
+    id("org.sonarqube") version "4.4.1.3373"
+    id("jacoco")
+}
+
+allprojects {
+    group = "com.ringcentral"
+    version = "1.0.0"
+    
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        maven { url = uri("https://repo.spring.io/milestone") }
+        maven { url = uri("https://packages.confluent.io/maven/") }
+    }
+}
+
+subprojects {
+    apply(plugin = "java")
+    apply(plugin = "org.springframework.boot")
+    apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "jacoco")
+    
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    
+    dependencies {
+        implementation("org.springframework.boot:spring-boot-starter")
+        implementation("org.springframework.boot:spring-boot-starter-actuator")
+        implementation("org.springframework.boot:spring-boot-starter-validation")
+        implementation("org.springframework.cloud:spring-cloud-starter-config")
+        implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+        
+        // 日志和监控
+        implementation("net.logstash.logback:logstash-logback-encoder:7.4")
+        implementation("io.micrometer:micrometer-registry-prometheus")
+        
+        // 测试依赖
+        testImplementation("org.springframework.boot:spring-boot-starter-test")
+        testImplementation("org.testcontainers:junit-jupiter")
+        testImplementation("org.testcontainers:postgresql")
+        testImplementation("org.testcontainers:kafka")
+    }
+    
+    dependencyManagement {
+        imports {
+            mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.0")
+            mavenBom("org.testcontainers:testcontainers-bom:1.19.3")
+        }
+    }
+    
+    tasks.withType<Test> {
+        useJUnitPlatform()
+        finalizedBy(tasks.jacocoTestReport)
+    }
+    
+    tasks.jacocoTestReport {
+        dependsOn(tasks.test)
+        reports {
+            xml.required.set(true)
+            html.required.set(true)
+        }
+    }
+}
+
+// 代码质量检查
+sonarqube {
+    properties {
+        property("sonar.projectKey", "ringcentral-multiagent-system")
+        property("sonar.organization", "ringcentral")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.coverage.jacoco.xmlReportPaths", "**/build/reports/jacoco/test/jacocoTestReport.xml")
+    }
+}
+
+// 自定义任务
+tasks.register("buildAll") {
+    group = "build"
+    description = "构建所有模块"
+    dependsOn(subprojects.map { "${it.path}:build" })
+}
+
+tasks.register("testAll") {
+    group = "verification"
+    description = "运行所有测试"
+    dependsOn(subprojects.map { "${it.path}:test" })
+}
+
+tasks.register("dockerBuildAll") {
+    group = "docker"
+    description = "构建所有Docker镜像"
+    dependsOn(
+        ":platform-services:api-gateway:dockerBuild",
+        ":platform-services:auth-service:dockerBuild",
+        ":agent-services:meeting-agent:dockerBuild",
+        ":agent-services:call-agent:dockerBuild",
+        ":ai-engines:speech-engine:dockerBuild",
+        ":ai-engines:nlu-engine:dockerBuild"
+    )
+}
+```
+
+#### **项目设置配置 (settings.gradle.kts)**
+
+```kotlin
+rootProject.name = "ringcentral-multiagent-system"
+
+// 包含所有子模块
+include(
+    // 共享模块
+    ":shared",
+    ":infrastructure",
+    
+    // 平台服务
+    ":platform-services:api-gateway",
+    ":platform-services:auth-service",
+    ":platform-services:config-service",
+    ":platform-services:monitor-service",
+    
+    // AI引擎
+    ":ai-engines:speech-engine",
+    ":ai-engines:nlu-engine",
+    ":ai-engines:knowledge-engine",
+    ":ai-engines:reasoning-engine",
+    
+    // 智能体服务
+    ":agent-services:meeting-agent",
+    ":agent-services:call-agent",
+    ":agent-services:router-agent",
+    ":agent-services:analytics-agent",
+    
+    // 测试模块
+    ":tests:unit-tests",
+    ":tests:integration-tests",
+    ":tests:e2e-tests",
+    ":tests:performance-tests"
+)
+
+// 插件管理
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+// 依赖解析策略
+dependencyResolutionManagement {
+    versionCatalogs {
+        create("libs") {
+            from(files("gradle/libs.versions.toml"))
+        }
+    }
+}
+```
+
+#### **版本管理 (buildSrc/src/main/kotlin/Versions.kt)**
+
+```kotlin
+object Versions {
+    // Spring生态
+    const val springBoot = "3.2.0"
+    const val springCloud = "2023.0.0"
+    const val springSecurityOAuth2 = "6.2.0"
+    
+    // 数据库
+    const val postgresql = "42.7.1"
+    const val redis = "4.4.6"
+    const val hikariCP = "5.1.0"
+    
+    // 消息队列
+    const val kafka = "3.6.1"
+    const val kafkaStreams = "3.6.1"
+    
+    // AI/ML框架
+    const val langchain4j = "0.25.0"
+    const val qdrant = "1.7.0"
+    const val openai = "0.8.1"
+    
+    // 网络框架
+    const val netty = "4.1.104.Final"
+    const val okhttp = "4.12.0"
+    
+    // 工具库
+    const val jackson = "2.16.0"
+    const val lombok = "1.18.30"
+    const val mapstruct = "1.5.5.Final"
+    
+    // 测试框架
+    const val junit = "5.10.1"
+    const val mockito = "5.8.0"
+    const val testcontainers = "1.19.3"
+    const val wiremock = "3.3.1"
+    
+    // 监控和日志
+    const val micrometer = "1.12.0"
+    const val logback = "1.4.14"
+    const val slf4j = "2.0.9"
+    
+    // 构建工具
+    const val gradle = "8.5"
+    const val docker = "0.34.0"
+    const val jib = "3.4.0"
+}
+```
+
+#### **依赖管理 (buildSrc/src/main/kotlin/Dependencies.kt)**
+
+```kotlin
+object Dependencies {
+    // Spring Boot Starters
+    const val springBootStarterWeb = "org.springframework.boot:spring-boot-starter-web"
+    const val springBootStarterWebflux = "org.springframework.boot:spring-boot-starter-webflux"
+    const val springBootStarterData = "org.springframework.boot:spring-boot-starter-data-jpa"
+    const val springBootStarterSecurity = "org.springframework.boot:spring-boot-starter-security"
+    const val springBootStarterActuator = "org.springframework.boot:spring-boot-starter-actuator"
+    const val springBootStarterValidation = "org.springframework.boot:spring-boot-starter-validation"
+    
+    // Spring Cloud
+    const val springCloudGateway = "org.springframework.cloud:spring-cloud-starter-gateway"
+    const val springCloudConfig = "org.springframework.cloud:spring-cloud-starter-config"
+    const val springCloudEureka = "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client"
+    const val springCloudLoadBalancer = "org.springframework.cloud:spring-cloud-starter-loadbalancer"
+    
+    // 数据库驱动
+    const val postgresql = "org.postgresql:postgresql:${Versions.postgresql}"
+    const val redisLettuce = "io.lettuce:lettuce-core:${Versions.redis}"
+    const val hikariCP = "com.zaxxer:HikariCP:${Versions.hikariCP}"
+    
+    // 消息队列
+    const val kafkaClients = "org.apache.kafka:kafka-clients:${Versions.kafka}"
+    const val kafkaStreams = "org.apache.kafka:kafka-streams:${Versions.kafkaStreams}"
+    const val springKafka = "org.springframework.kafka:spring-kafka"
+    
+    // AI/ML集成
+    const val langchain4j = "dev.langchain4j:langchain4j:${Versions.langchain4j}"
+    const val langchain4jOpenai = "dev.langchain4j:langchain4j-open-ai:${Versions.langchain4j}"
+    const val qdrantClient = "io.qdrant:client:${Versions.qdrant}"
+    const val openaiJava = "com.theokanning.openai-gpt3-java:service:${Versions.openai}"
+    
+    // 网络框架
+    const val nettyAll = "io.netty:netty-all:${Versions.netty}"
+    const val nettyTransportNativeEpoll = "io.netty:netty-transport-native-epoll:${Versions.netty}"
+    const val okhttp = "com.squareup.okhttp3:okhttp:${Versions.okhttp}"
+    
+    // JSON处理
+    const val jacksonCore = "com.fasterxml.jackson.core:jackson-core:${Versions.jackson}"
+    const val jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind:${Versions.jackson}"
+    const val jacksonKotlin = "com.fasterxml.jackson.module:jackson-module-kotlin:${Versions.jackson}"
+    
+    // 工具库
+    const val lombok = "org.projectlombok:lombok:${Versions.lombok}"
+    const val mapstruct = "org.mapstruct:mapstruct:${Versions.mapstruct}"
+    const val mapstructProcessor = "org.mapstruct:mapstruct-processor:${Versions.mapstruct}"
+    
+    // 测试依赖
+    const val junitJupiter = "org.junit.jupiter:junit-jupiter:${Versions.junit}"
+    const val mockitoCore = "org.mockito:mockito-core:${Versions.mockito}"
+    const val mockitoJunit = "org.mockito:mockito-junit-jupiter:${Versions.mockito}"
+    const val testcontainersJunit = "org.testcontainers:junit-jupiter:${Versions.testcontainers}"
+    const val testcontainersPostgresql = "org.testcontainers:postgresql:${Versions.testcontainers}"
+    const val testcontainersKafka = "org.testcontainers:kafka:${Versions.testcontainers}"
+    const val wiremock = "com.github.tomakehurst:wiremock-jre8:${Versions.wiremock}"
+    
+    // 监控和日志
+    const val micrometerPrometheus = "io.micrometer:micrometer-registry-prometheus:${Versions.micrometer}"
+    const val logstashEncoder = "net.logstash.logback:logstash-logback-encoder:7.4"
+    const val slf4jApi = "org.slf4j:slf4j-api:${Versions.slf4j}"
+}
+```
+
+#### **Java约定插件 (buildSrc/src/main/kotlin/plugins/java-conventions.gradle.kts)**
+
+```kotlin
+plugins {
+    java
+    jacoco
+    id("org.sonarqube")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+    options.compilerArgs.addAll(listOf(
+        "-Xlint:all",
+        "-Xlint:-processing",
+        "-Werror"
+    ))
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+    finalizedBy(tasks.jacocoTestCoverageVerification)
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = "0.80".toBigDecimal()
+            }
+        }
+    }
+}
+
+// 代码质量检查
+tasks.register<Checkstyle>("checkstyle") {
+    configFile = file("${rootProject.projectDir}/config/checkstyle/checkstyle.xml")
+    source("src/main/java")
+    include("**/*.java")
+    classpath = files()
+}
+
+tasks.register<SpotBugs>("spotbugs") {
+    reports.create("html")
+    reports.create("xml")
+}
+```
+
+#### **Spring约定插件 (buildSrc/src/main/kotlin/plugins/spring-conventions.gradle.kts)**
+
+```kotlin
+plugins {
+    id("java-conventions")
+    id("org.springframework.boot")
+    id("io.spring.dependency-management")
+    id("com.google.cloud.tools.jib")
+}
+
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.cloud:spring-cloud-starter-config")
+    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+    
+    // 监控和日志
+    implementation("net.logstash.logback:logstash-logback-encoder")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    
+    // 开发工具
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    
+    // 测试依赖
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.testcontainers:junit-jupiter")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.0")
+        mavenBom("org.testcontainers:testcontainers-bom:1.19.3")
+    }
+}
+
+// Docker镜像构建配置
+jib {
+    from {
+        image = "openjdk:17-jre-slim"
+        platforms {
+            platform {
+                architecture = "amd64"
+                os = "linux"
+            }
+            platform {
+                architecture = "arm64"
+                os = "linux"
+            }
+        }
+    }
+    to {
+        image = "ringcentral/${project.name}:${project.version}"
+        tags = setOf("latest", project.version.toString())
+    }
+    container {
+        jvmFlags = listOf(
+            "-Xms512m",
+            "-Xmx2g",
+            "-XX:+UseG1GC",
+            "-XX:+UseContainerSupport",
+            "-Djava.security.egd=file:/dev/./urandom"
+        )
+        ports = listOf("8080", "8081")
+        labels = mapOf(
+            "maintainer" to "RingCentral AI Team",
+            "version" to project.version.toString(),
+            "description" to "RingCentral MultiAgent System - ${project.name}"
+        )
+    }
+}
+
+// Spring Boot任务配置
+tasks.bootJar {
+    archiveFileName.set("${project.name}.jar")
+    layered {
+        enabled = true
+    }
+}
+
+tasks.register("dockerBuild") {
+    group = "docker"
+    description = "构建Docker镜像"
+    dependsOn(tasks.jib)
+}
+```
+
+#### **模块构建示例 (agent-services/meeting-agent/build.gradle.kts)**
+
+```kotlin
+plugins {
+    id("spring-conventions")
+    kotlin("jvm")
+    kotlin("plugin.spring")
+    kotlin("plugin.jpa")
+}
+
+dependencies {
+    // 项目依赖
+    implementation(project(":shared"))
+    implementation(project(":infrastructure"))
+    
+    // Spring Boot
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    
+    // AI/ML集成
+    implementation("dev.langchain4j:langchain4j")
+    implementation("dev.langchain4j:langchain4j-open-ai")
+    implementation("io.qdrant:client")
+    
+    // 网络框架
+    implementation("io.netty:netty-all")
+    implementation("org.springframework:spring-webflux")
+    
+    // 消息队列
+    implementation("org.springframework.kafka:spring-kafka")
+    implementation("org.apache.kafka:kafka-streams")
+    
+    // 数据库
+    implementation("org.postgresql:postgresql")
+    implementation("io.lettuce:lettuce-core")
+    
+    // 工具库
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.mapstruct:mapstruct")
+    kapt("org.mapstruct:mapstruct-processor")
+    
+    // 测试
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:kafka")
+    testImplementation("com.github.tomakehurst:wiremock-jre8")
+}
+
+// Kotlin编译配置
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs = listOf("-Xjsr305=strict")
+        jvmTarget = "17"
+    }
+}
+
+// 应用配置
+application {
+    mainClass.set("com.ringcentral.meeting.MeetingAgentApplication")
+}
+
+// Docker配置
+jib {
+    to {
+        image = "ringcentral/meeting-agent:${project.version}"
+    }
+    container {
+        mainClass = "com.ringcentral.meeting.MeetingAgentApplication"
+        ports = listOf("8080", "8081", "9090")
+        environment = mapOf(
+            "SPRING_PROFILES_ACTIVE" to "docker",
+            "JAVA_OPTS" to "-Xms1g -Xmx4g"
+        )
+    }
+}
+```
+
+**构建和部署脚本**：
+
+#### **构建脚本 (scripts/build/build-all.sh)**
+
+```bash
+#!/bin/bash
+
+set -e
+
+echo "🚀 开始构建RingCentral多智能体系统..."
+
+# 清理之前的构建
+echo "🧹 清理之前的构建..."
+./gradlew clean
+
+# 编译所有模块
+echo "🔨 编译所有模块..."
+./gradlew compileJava compileKotlin
+
+# 运行测试
+echo "🧪 运行单元测试..."
+./gradlew test
+
+# 运行代码质量检查
+echo "📊 运行代码质量检查..."
+./gradlew checkstyleMain spotbugsMain
+
+# 构建JAR包
+echo "📦 构建JAR包..."
+./gradlew bootJar
+
+# 构建Docker镜像
+echo "🐳 构建Docker镜像..."
+./gradlew dockerBuildAll
+
+# 生成测试报告
+echo "📋 生成测试报告..."
+./gradlew jacocoTestReport
+
+echo "✅ 构建完成！"
+echo "📊 测试覆盖率报告: build/reports/jacoco/test/html/index.html"
+echo "🐳 Docker镜像已构建完成"
+```
+
+#### **部署脚本 (scripts/deploy/deploy-dev.sh)**
+
+```bash
+#!/bin/bash
+
+set -e
+
+ENVIRONMENT="dev"
+NAMESPACE="ringcentral-ai-${ENVIRONMENT}"
+
+echo "🚀 部署到${ENVIRONMENT}环境..."
+
+# 构建最新镜像
+echo "🔨 构建最新镜像..."
+./scripts/build/build-all.sh
+
+# 创建命名空间
+echo "📦 创建Kubernetes命名空间..."
+kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+
+# 应用配置
+echo "⚙️ 应用配置..."
+kubectl apply -f deployment/kubernetes/configmap.yaml -n ${NAMESPACE}
+kubectl apply -f deployment/kubernetes/secret.yaml -n ${NAMESPACE}
+
+# 部署服务
+echo "🚢 部署服务..."
+helm upgrade --install ringcentral-ai deployment/helm \
+  --namespace ${NAMESPACE} \
+  --values deployment/helm/values-${ENVIRONMENT}.yaml \
+  --wait --timeout=600s
+
+# 验证部署
+echo "✅ 验证部署..."
+kubectl get pods -n ${NAMESPACE}
+kubectl get services -n ${NAMESPACE}
+
+echo "🎉 部署完成！"
+echo "🌐 API网关地址: $(kubectl get ingress -n ${NAMESPACE} -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}')"
+```
+
+这个模块化的Gradle构建系统提供了：
+
+1. **统一构建管理**：所有模块使用统一的Gradle配置
+2. **依赖版本管理**：集中管理所有依赖版本，避免冲突
+3. **代码质量保证**：集成Checkstyle、SpotBugs、JaCoCo等工具
+4. **Docker集成**：使用Jib插件自动构建Docker镜像
+5. **测试自动化**：支持单元测试、集成测试、性能测试
+6. **多环境支持**：支持开发、测试、生产环境的差异化配置
 
 ### 4.2 关键流程时序图
 
@@ -3869,66 +4713,6 @@ CI/CD流程:
 
 ---
 
-## 📊 项目工程结构Tree图
-
-```bash
-RingCentral-MultiAgent-System/
-├── docs/                           # 项目文档
-│   ├── architecture/               # 架构设计文档
-│   ├── api/                       # API文档
-│   └── deployment/                # 部署文档
-├── backend/                       # 后端服务
-│   ├── agent-services/            # 智能体服务
-│   │   ├── meeting-agent/         # 会议智能体
-│   │   ├── call-agent/           # 通话智能体
-│   │   ├── router-agent/         # 路由智能体
-│   │   └── analytics-agent/      # 分析智能体
-│   ├── ai-engines/               # AI引擎服务
-│   │   ├── speech-engine/        # 语音处理引擎
-│   │   ├── nlu-engine/          # 自然语言理解
-│   │   ├── knowledge-engine/     # 知识检索引擎
-│   │   └── reasoning-engine/     # 推理决策引擎
-│   ├── platform-services/        # 平台基础服务
-│   │   ├── api-gateway/          # API网关
-│   │   ├── auth-service/         # 认证服务
-│   │   ├── config-service/       # 配置中心
-│   │   └── monitor-service/      # 监控服务
-│   └── shared/                   # 共享组件
-│       ├── common/               # 通用工具
-│       ├── models/               # 数据模型
-│       └── clients/              # 客户端SDK
-├── frontend/                     # 前端应用
-│   ├── web-portal/               # Web管理门户
-│   ├── mobile-app/               # 移动应用
-│   └── shared-components/        # 共享组件
-├── ai-models/                    # AI模型相关
-│   ├── training/                 # 模型训练
-│   ├── inference/                # 模型推理
-│   ├── evaluation/               # 模型评估
-│   └── datasets/                 # 数据集
-├── infrastructure/               # 基础设施
-│   ├── kubernetes/               # K8s部署配置
-│   ├── docker/                   # Docker配置
-│   ├── terraform/                # 基础设施即代码
-│   └── monitoring/               # 监控配置
-├── scripts/                      # 脚本工具
-│   ├── build/                    # 构建脚本
-│   ├── deploy/                   # 部署脚本
-│   └── migration/                # 数据迁移脚本
-├── tests/                        # 测试代码
-│   ├── unit/                     # 单元测试
-│   ├── integration/              # 集成测试
-│   ├── e2e/                      # 端到端测试
-│   └── performance/              # 性能测试
-├── .github/                      # GitHub配置
-│   └── workflows/                # CI/CD工作流
-├── docker-compose.yml            # 本地开发环境
-├── README.md                     # 项目说明
-├── LICENSE                       # 开源协议
-└── .gitignore                    # Git忽略文件
-```
-
----
 
 ## 📝 总结
 
@@ -3946,8 +4730,6 @@ RingCentral-MultiAgent-System/
 ---
 
 ## 📋 JD技术要求完全对齐检查表
-
-### ✅ 核心技术栈100%匹配
 
 **后端技术 (JD明确要求)**：
 - ✅ **Java 17** - 架构设计核心后端语言
@@ -3981,127 +4763,3 @@ RingCentral-MultiAgent-System/
 - ✅ **AWS** - 亚马逊云服务
 - ✅ **Azure** - 微软云服务
 - ✅ **GCP** - 谷歌云服务
-
-### ✅ 核心能力100%覆盖
-
-**AI能力 (JD要求)**：
-- ✅ **提示工程** - 专门的提示工程模块设计
-- ✅ **思维链推理** - Chain-of-Thought推理实现
-- ✅ **智能体风格的模型协调** - AutoGen框架实现
-- ✅ **向量数据库和RAG管道** - qDrant + LlamaIndex实现
-- ✅ **上下文切换和提示路由** - 统一LLM适配层
-- ✅ **记忆系统** - 基于向量数据库的记忆存储
-
-**系统能力 (JD要求)**：
-- ✅ **分布式系统** - 微服务架构设计
-- ✅ **云原生应用** - 容器化部署架构
-- ✅ **微服务架构** - Spring Cloud生态
-- ✅ **实时通信系统** - WebSocket + 发布/订阅
-- ✅ **认证/授权** - OAuth 2.0 + JWT + RBAC
-- ✅ **后台任务系统** - Apache Kafka异步处理
-
-### ✅ 优先资格条件匹配
-
-**平台经验**：
-- ✅ **智能体AI平台** - 支持Microsoft Copilot Studio集成
-- ✅ **SaaS应用开发** - 云原生SaaS架构设计
-- ✅ **混合云AI应用** - 多云部署架构
-
-**技术经验**：
-- ✅ **对话式AI界面** - WebSocket实时通信设计
-- ✅ **企业AI优先解决方案** - 企业级安全和治理
-- ✅ **生产环境AI/ML部署** - 完整的运维和监控体系
-
-### 🎯 架构设计亮点
-
-**PlantUML架构图**：
-- 🎨 使用PlantUML重新绘制所有架构图
-- 📊 清晰展示技术栈与JD要求的对应关系
-- 🔗 突出显示JD明确要求的技术组件
-
-**技术栈完全对齐**：
-- 💯 100%覆盖JD的所有技术要求
-- ✅ 每个技术选型都有明确的JD要求匹配标识
-- 🎯 核心能力与JD职责描述完全一致
-
-**企业级架构质量**：
-- 🏗️ 采用标准的企业架构设计方法论
-- 🛡️ 完整的安全、性能、可靠性设计
-- 📈 详细的项目管理和成本效益分析
-
-**结论**：本架构设计完全符合RingCentral智能体人工智能应用后端工程师JD的所有技术要求，可以直接用于项目实施和团队招聘。
-
----
-
-## 📋 关键流程设计总结
-
-### 🎯 核心业务流程覆盖
-
-**已设计的9个关键流程时序图**：
-
-1. **会议智能体处理流程** - 实时语音转录、摘要生成的完整流程
-2. **通话智能体情感分析流程** - 实时情感识别、预警机制的处理流程  
-3. **路由智能体负载均衡流程** - 智能路由、健康检查、负载均衡算法
-4. **多LLM供应商切换流程** - 提示路由、上下文切换、故障转移机制
-5. **RAG知识检索流程** - 向量检索、知识增强生成的完整管道
-6. **用户认证授权流程** - OAuth 2.0、JWT、RBAC权限控制
-7. **实时通信WebSocket流程** - 双向通信、消息分发、事件推送
-8. **数据同步与一致性流程** - 分布式事务、数据一致性保证
-9. **错误处理与故障恢复流程** - 熔断器模式、服务降级、自动恢复
-
-### ✅ JD技术要求完全对齐
-
-**流程设计中体现的JD要求**：
-
-| 流程类别 | JD技术要求体现 | 实现方式 |
-|---------|---------------|---------|
-| **后端语言** | Java/Kotlin | 所有服务组件使用Java/Kotlin实现 |
-| **数据库** | PostgreSQL + Redis + qDrant | 关系数据、缓存、向量存储分离设计 |
-| **LLM编排** | LangChain + AutoGen + LlamaIndex | 完整的LLM编排和智能体协调流程 |
-| **LLM供应商** | 5个主要供应商 | 智能路由和故障转移机制 |
-| **API设计** | REST + GraphQL + WebSocket | 多种API协议支持和实时通信 |
-| **认证授权** | OAuth 2.0 + JWT + RBAC | 企业级安全认证和权限控制 |
-| **实时通信** | WebSocket + 发布/订阅 | 高性能实时消息推送机制 |
-| **云原生** | 微服务 + 容器化 | 分布式系统和云原生部署 |
-
-### 🏗️ 工程结构设计亮点
-
-**完整的项目工程结构**：
-- **后端服务**：智能体服务、AI引擎、平台服务的分层设计
-- **前端应用**：Web、移动端、共享组件的模块化架构
-- **AI模型**：训练、推理、数据集的完整ML工程
-- **基础设施**：Kubernetes、Docker、Terraform的云原生配置
-- **测试体系**：单元、集成、端到端、性能测试的全覆盖
-- **CI/CD**：GitHub Actions的自动化构建部署流程
-
-### 🔄 流程设计的企业级特性
-
-**高可用性保证**：
-- 熔断器模式防止故障扩散
-- 多实例部署和负载均衡
-- 自动故障检测和恢复机制
-
-**数据一致性保证**：
-- 分布式事务管理
-- 最终一致性设计
-- 数据同步和修复机制
-
-**安全性保证**：
-- 多层认证授权机制
-- JWT令牌管理和会话控制
-- API权限细粒度控制
-
-**性能优化**：
-- Redis缓存加速
-- 向量数据库高效检索
-- 实时流处理优化
-
-### 📊 设计完整性验证
-
-✅ **工程结构图** - 完整的项目目录和文件组织  
-✅ **9个关键流程时序图** - 覆盖核心业务和技术流程  
-✅ **JD技术要求100%对齐** - 每个流程都体现JD要求的技术栈  
-✅ **企业级质量保证** - 高可用、一致性、安全性、性能优化  
-✅ **PlantUML标准化** - 所有图表使用统一的PlantUML格式  
-
-这些设计为RingCentral提供了一个完整、可实施、高质量的AI智能体协同平台解决方案！ 
