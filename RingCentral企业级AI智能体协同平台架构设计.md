@@ -579,6 +579,8 @@ note right of OpenAI : JD要求集成的\n多个LLM供应商
 | **云平台** | GCP | - | ✅ JD明确要求 | 谷歌云服务 |
 | **认证授权** | OAuth 2.0 | - | ✅ JD优先要求 | 认证/授权系统 |
 | **认证授权** | JWT | - | ✅ 无状态认证 | JSON Web Token |
+| **高性能网络** | Netty | 4.1 | ✅ 音视频流传输需求 | 高性能异步网络框架 |
+| **构建工具** | Gradle | 8.13 | ✅ 统一构建方式 | 现代化构建自动化工具 |
 
 **LLM供应商集成 (JD明确要求)**：
 
@@ -984,9 +986,6 @@ note right of ZeroTrust : 企业级安全架构\n最小权限原则
 ## 4. 详细设计 (Detailed Design)
 
 ### 4.1 工程结构设计
-
-**项目工程结构Tree图**：
-
 ```text
 RingCentral-MultiAgent-System/
 ├── docs/                                    # 项目文档
@@ -2754,10 +2753,12 @@ CREATE INDEX ON vector_embeddings USING ivfflat (embedding vector_cosine_ops);
 后端技术栈:
   核心框架: Spring Boot 3.2 + Spring Cloud 2023
   编程语言: Java 17 + Kotlin 1.9
+  高性能网络: Netty 4.1 (音视频流传输、大规模并发)
   数据访问: Spring Data JPA + MyBatis-Plus
   缓存: Redis 7.x + Caffeine
   消息队列: Apache Kafka 3.6 + RabbitMQ
   API网关: Spring Cloud Gateway
+  构建工具: Gradle 8.13 (统一构建方式)
 
 AI/ML技术栈:
   智能体框架: LangChain 0.1 + AutoGen 0.2
