@@ -36,7 +36,7 @@ dependencyManagement {
 // Docker镜像构建配置
 jib {
     from {
-        image = "openjdk:17-jre-slim"
+        image = "eclipse-temurin:17-jre-alpine"
         platforms {
             platform {
                 architecture = "amd64"
