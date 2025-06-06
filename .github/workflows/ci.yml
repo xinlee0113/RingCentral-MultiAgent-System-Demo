@@ -326,17 +326,21 @@ jobs:
           echo "Registry: ghcr.io"
           
           case "${{ matrix.service }}" in
-            "api-gateway"|"auth-service")
+            "api-gateway"|"auth-service"|"config-service"|"monitor-service")
               echo "Building platform service: ${{ matrix.service }}"
               ./gradlew :platform-services:${{ matrix.service }}:jib --info --stacktrace
               ;;
-            "meeting-agent"|"call-agent")
+            "meeting-agent"|"call-agent"|"router-agent"|"analytics-agent")
               echo "Building agent service: ${{ matrix.service }}"
               ./gradlew :agent-services:${{ matrix.service }}:jib --info --stacktrace
               ;;
-            "speech-engine"|"nlu-engine")
+            "speech-engine"|"nlu-engine"|"knowledge-engine"|"reasoning-engine")
               echo "Building AI engine: ${{ matrix.service }}"
               ./gradlew :ai-engines:${{ matrix.service }}:jib --info --stacktrace
+              ;;
+            *)
+              echo "Unknown service: ${{ matrix.service }}"
+              exit 1
               ;;
           esac
 
@@ -366,20 +370,19 @@ jobs:
             apiVersion: kind.x-k8s.io/v1alpha4
             nodes:
             - role: control-plane
-              kubeadmConfigPatches:
-              - |
-                kind: InitConfiguration
-                nodeRegistration:
-                  kubeletExtraArgs:
-                    node-labels: "ingress-ready=true"
               extraPortMappings:
               - containerPort: 80
-                hostPort: 80
+                hostPort: 8080
                 protocol: TCP
               - containerPort: 443
-                hostPort: 443
+                hostPort: 8443
                 protocol: TCP
 
+      - name: Wait for cluster to be ready
+        run: |
+          echo "Waiting for cluster to be ready..."
+          kubectl wait --for=condition=Ready nodes --all --timeout=300s
+          
       - name: Verify Kubernetes cluster
         run: |
           kubectl cluster-info
@@ -389,7 +392,11 @@ jobs:
       - name: Load Docker images to kind cluster
         run: |
           # 将构建的镜像加载到kind集群中
-          services=("api-gateway" "auth-service" "meeting-agent" "call-agent" "speech-engine" "nlu-engine")
+          services=(
+            "api-gateway" "auth-service" "config-service" "monitor-service"
+            "meeting-agent" "call-agent" "router-agent" "analytics-agent"
+            "speech-engine" "nlu-engine" "knowledge-engine" "reasoning-engine"
+          )
           for service in "${services[@]}"; do
             echo "Loading image for $service..."
             # 从GitHub Container Registry拉取镜像并加载到kind
