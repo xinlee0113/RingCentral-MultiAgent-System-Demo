@@ -45,7 +45,7 @@ application {
 // Docker配置
 jib {
     to {
-        image = "ringcentral/reasoning-engine:${project.version}"
+        image = "ghcr.io/xinlee0113/ringcentral-multiagent-system/reasoning-engine:${project.version}"
     }
     container {
         mainClass = "com.ringcentral.ai.reasoning.ReasoningEngineApplication"

@@ -31,7 +31,7 @@ application {
 // Docker配置
 jib {
     to {
-        image = "ringcentral/config-service:${project.version}"
+        image = "ghcr.io/xinlee0113/ringcentral-multiagent-system/config-service:${project.version}"
     }
     container {
         mainClass = "com.ringcentral.config.ConfigServiceApplication"

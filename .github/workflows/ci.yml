@@ -281,7 +281,14 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        service: [api-gateway, auth-service, meeting-agent, call-agent, speech-engine, nlu-engine]
+        service: [
+          # 平台服务
+          api-gateway, auth-service, config-service, monitor-service,
+          # 智能体服务  
+          meeting-agent, call-agent, router-agent, analytics-agent,
+          # AI引擎
+          speech-engine, nlu-engine, knowledge-engine, reasoning-engine
+        ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

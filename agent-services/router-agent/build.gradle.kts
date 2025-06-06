@@ -43,7 +43,7 @@ application {
 // Docker配置
 jib {
     to {
-        image = "ringcentral/router-agent:${project.version}"
+        image = "ghcr.io/xinlee0113/ringcentral-multiagent-system/router-agent:${project.version}"
     }
     container {
         mainClass = "com.ringcentral.agent.router.RouterAgentApplication"

@@ -47,7 +47,7 @@ application {
 // Docker配置
 jib {
     to {
-        image = "ringcentral/knowledge-engine:${project.version}"
+        image = "ghcr.io/xinlee0113/ringcentral-multiagent-system/knowledge-engine:${project.version}"
     }
     container {
         mainClass = "com.ringcentral.ai.knowledge.KnowledgeEngineApplication"
