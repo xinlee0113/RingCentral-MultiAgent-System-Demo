@@ -51,7 +51,7 @@ jobs:
 
   # 快速构建和单元测试
   fast-build:
-    name: Fast Build & Unit Tests
+    name: Fast Build
     runs-on: ubuntu-latest
     needs: code-quality
     strategy:
@@ -321,9 +321,13 @@ jobs:
           # 运行构建和测试覆盖率报告
           ./gradlew build jacocoTestReport --parallel --build-cache --no-configuration-cache
           
-          # 运行SonarQube分析
-          echo "Running SonarQube analysis..."
-          ./gradlew sonarqube --info --no-configuration-cache
+          # 检查SonarQube token是否存在
+          if [ -n "$SONAR_TOKEN" ] && [ "$SONAR_TOKEN" != "mock-token" ]; then
+            echo "Running SonarQube analysis..."
+            ./gradlew sonarqube --info --no-configuration-cache --stacktrace
+          else
+            echo "SonarQube token not configured or is mock token, skipping analysis"
+          fi
 
   # Docker镜像构建
   docker-build:
@@ -378,18 +382,46 @@ jobs:
           echo "GitHub Actor: ${{ github.actor }}"
           echo "Registry: ghcr.io"
           
+          # 定义重试函数
+          retry_docker_build() {
+            local max_attempts=3
+            local attempt=1
+            local gradle_task="$1"
+            
+            while [ $attempt -le $max_attempts ]; do
+              echo "🔄 Attempt $attempt of $max_attempts for $gradle_task"
+              
+              if $gradle_task --no-configuration-cache --no-parallel --stacktrace; then
+                echo "✅ Docker build succeeded on attempt $attempt"
+                return 0
+              else
+                echo "❌ Docker build failed on attempt $attempt"
+                if [ $attempt -lt $max_attempts ]; then
+                  echo "⏳ Waiting 30 seconds before retry..."
+                  sleep 30
+                  # 清理可能的缓存问题
+                  ./gradlew clean --no-configuration-cache
+                fi
+                attempt=$((attempt + 1))
+              fi
+            done
+            
+            echo "💥 Docker build failed after $max_attempts attempts"
+            return 1
+          }
+          
           case "${{ matrix.service }}" in
             "api-gateway"|"auth-service"|"config-service"|"monitor-service")
               echo "Building platform service: ${{ matrix.service }}"
-              ./gradlew :platform-services:${{ matrix.service }}:jib --info --stacktrace
+              retry_docker_build "./gradlew :platform-services:${{ matrix.service }}:jib"
               ;;
             "meeting-agent"|"call-agent"|"router-agent"|"analytics-agent")
               echo "Building agent service: ${{ matrix.service }}"
-              ./gradlew :agent-services:${{ matrix.service }}:jib --info --stacktrace
+              retry_docker_build "./gradlew :agent-services:${{ matrix.service }}:jib"
               ;;
             "speech-engine"|"nlu-engine"|"knowledge-engine"|"reasoning-engine")
               echo "Building AI engine: ${{ matrix.service }}"
-              ./gradlew :ai-engines:${{ matrix.service }}:jib --info --stacktrace
+              retry_docker_build "./gradlew :ai-engines:${{ matrix.service }}:jib"
               ;;
             *)
               echo "Unknown service: ${{ matrix.service }}"
