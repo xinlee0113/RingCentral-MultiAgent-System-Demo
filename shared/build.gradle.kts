@@ -15,23 +15,24 @@ dependencies {
     api(libs.spring.boot.starter.web)
     api(libs.spring.boot.starter.actuator)
     api(libs.spring.boot.starter.validation)
-    
+
     // JSON处理
     api(libs.jackson.core)
     api(libs.jackson.databind)
     api("com.fasterxml.jackson.module:jackson-module-kotlin")
-    
+
     // 工具库
-    api("org.projectlombok:lombok:1.18.30")
-    api("org.mapstruct:mapstruct:1.5.5.Final")
-    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
-    
+    api("org.projectlombok:lombok:${property("version.lombok")}")
+    api("org.mapstruct:mapstruct:${property("version.mapstruct")}")
+    annotationProcessor("org.mapstruct:mapstruct-processor:${property("version.mapstruct")}")
+
     // 测试依赖
     testImplementation(libs.spring.boot.starter.test)
 }
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.0")
+        mavenBom("org.springframework.boot:spring-boot-dependencies:${property("version.springBoot")}")
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("version.springCloud")}")
     }
 } 

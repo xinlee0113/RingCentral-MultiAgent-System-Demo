@@ -13,8 +13,8 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
     
     // 监控和日志
-    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
-    implementation("io.micrometer:micrometer-registry-prometheus:1.12.2")
+    implementation("net.logstash.logback:logstash-logback-encoder:${property("version.logstashEncoder")}")
+    implementation("io.micrometer:micrometer-registry-prometheus:${property("version.prometheus")}")
     
     // 开发工具
     developmentOnly("org.springframework.boot:spring-boot-devtools")
@@ -27,8 +27,9 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.0")
-        mavenBom("org.testcontainers:testcontainers-bom:1.19.3")
+        mavenBom("org.springframework.boot:spring-boot-dependencies:${property("version.springBoot")}")
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("version.springCloud")}")
+        mavenBom("org.testcontainers:testcontainers-bom:${property("version.testcontainers")}")
     }
 }
 

@@ -16,20 +16,20 @@ dependencies {
     testImplementation(project(":ai-engines:nlu-engine"))
     testImplementation(project(":agent-services:meeting-agent"))
     testImplementation(project(":agent-services:call-agent"))
-    
+
     // Spring Boot测试
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation(libs.spring.security.test)
     testImplementation("org.springframework.cloud:spring-cloud-starter-contract-verifier")
-    
-    // Testcontainers
-    testImplementation(libs.bundles.testcontainers.all)
-    testImplementation(libs.testcontainers.elasticsearch)
-    
+
+    // Testcontainers - 缺失依赖暂时注释
+    // testImplementation(libs.bundles.testcontainers.all)
+    // testImplementation(libs.testcontainers.elasticsearch)
+
     // 网络测试
     testImplementation(libs.wiremock)
-    testImplementation(libs.okhttp.mockwebserver)
-    
+    // testImplementation(libs.okhttp.mockwebserver)  // 缺失依赖暂时注释
+
     // 测试工具
     testImplementation(libs.awaitility)
     testImplementation(libs.rest.assured)
@@ -47,13 +47,13 @@ tasks.test {
     testLogging {
         events("passed", "skipped", "failed")
     }
-    
+
     // 集成测试需要更多时间
     timeout.set(Duration.ofMinutes(10))
-    
+
     // 系统属性
     systemProperty("spring.profiles.active", "integration-test")
-    
+
     // 测试报告
     reports {
         junitXml.required.set(true)

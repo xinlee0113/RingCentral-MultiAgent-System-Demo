@@ -7,18 +7,18 @@ dependencies {
     // 项目依赖
     implementation(project(":shared"))
     implementation(project(":infrastructure"))
-    
+
     // Spring Cloud Config
     implementation("org.springframework.cloud:spring-cloud-config-server")
     implementation("org.springframework.cloud:spring-cloud-starter-bootstrap")
-    
+
     // Spring Boot Web
     implementation(Dependencies.springBootStarterWeb)
     implementation(Dependencies.springBootStarterSecurity)
-    
+
     // Git支持
     implementation(libs.jgit)
-    
+
     // 测试依赖
     testImplementation("org.springframework.cloud:spring-cloud-config-server")
 }
@@ -37,7 +37,7 @@ jib {
         mainClass = "com.ringcentral.config.ConfigServiceApplication"
         ports = listOf("8888")
         environment = mapOf(
-            "SPRING_PROFILES_ACTIVE" to "docker"
+            "SPRING_PROFILES_ACTIVE" to "docker",
         )
     }
 } 

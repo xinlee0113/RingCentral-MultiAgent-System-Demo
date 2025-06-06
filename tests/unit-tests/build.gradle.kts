@@ -14,12 +14,12 @@ dependencies {
     testImplementation(project(":ai-engines:nlu-engine"))
     testImplementation(project(":agent-services:meeting-agent"))
     testImplementation(project(":agent-services:call-agent"))
-    
+
     // 测试框架
     testImplementation(libs.bundles.testing)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.security.test)
-    
+
     // 扩展测试工具
     testImplementation(libs.assertj)
     testImplementation(libs.hamcrest)
@@ -38,10 +38,10 @@ tasks.test {
     testLogging {
         events("passed", "skipped", "failed")
     }
-    
+
     // 并行执行测试
     maxParallelForks = Runtime.getRuntime().availableProcessors()
-    
+
     // 测试报告
     reports {
         junitXml.required.set(true)

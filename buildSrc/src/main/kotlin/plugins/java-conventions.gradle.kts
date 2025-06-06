@@ -4,6 +4,7 @@ plugins {
     java
     jacoco
     id("org.sonarqube")
+    id("code-quality-conventions")
 }
 
 java {

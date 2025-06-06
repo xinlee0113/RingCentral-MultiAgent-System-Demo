@@ -7,31 +7,32 @@ dependencies {
     // 项目依赖
     implementation(project(":shared"))
     implementation(project(":infrastructure"))
-    
+
     // Spring Boot Web
     implementation(libs.spring.boot.starter.web)
-    
+
     // LangChain4j集成
     implementation(libs.langchain4j.core)
     implementation(libs.langchain4j.openai)
-    implementation("dev.langchain4j:langchain4j-azure-open-ai:${libs.versions.langchain4j.get()}")
-    implementation("dev.langchain4j:langchain4j-hugging-face:${libs.versions.langchain4j.get()}")
-    
-    // NLP处理 - 使用版本目录
-    implementation(libs.stanford.nlp.core)
-    implementation(libs.stanford.nlp.models) {
-        artifact {
-            classifier = "models"
-        }
-    }
-    
-    // 机器学习 - 使用版本目录
-    implementation(libs.deeplearning4j.core)
-    implementation(libs.nd4j.native)
-    
+    implementation("dev.langchain4j:langchain4j-azure-open-ai:${property("version.langchain4j")}")
+    implementation("dev.langchain4j:langchain4j-hugging-face:${property("version.langchain4j")}")
+
+    // NLP处理 - NLU引擎核心依赖，需要保留
+    implementation("edu.stanford.nlp:stanford-corenlp:${property("version.stanfordNlp")}") // Stanford CoreNLP - 自然语言理解必需
+    // 暂时注释大型模型文件(452MB+)，按需启用
+    // implementation("edu.stanford.nlp:stanford-corenlp:${property("version.stanfordNlp")}:models") { // 预训练模型
+    //     artifact {
+    //         classifier = "models"
+    //     }
+    // }
+
+    // 机器学习 - 大型库暂时注释 (500MB+)
+    // implementation(libs.deeplearning4j.core)
+    // implementation(libs.nd4j.native)
+
     // 缓存 (模型缓存)
     implementation(libs.spring.boot.starter.data.redis)
-    
+
     // 测试依赖
     testImplementation(libs.wiremock)
 }
@@ -42,7 +43,7 @@ configurations.all {
         // 强制使用统一版本
         force("org.glassfish.jaxb:jaxb-core:4.0.4")
         force("org.glassfish.jaxb:jaxb-runtime:4.0.4")
-        
+
         // 排除冲突的传递依赖
         eachDependency {
             if (requested.group == "org.glassfish.jaxb" && requested.name == "jaxb-core") {
@@ -88,10 +89,10 @@ jib {
         jvmFlags = listOf(
             "-Xms1g",
             "-Xmx4g",
-            "-XX:+UseG1GC"
+            "-XX:+UseG1GC",
         )
         environment = mapOf(
-            "SPRING_PROFILES_ACTIVE" to "docker"
+            "SPRING_PROFILES_ACTIVE" to "docker",
         )
     }
 } 
