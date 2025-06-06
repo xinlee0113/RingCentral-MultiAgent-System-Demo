@@ -97,7 +97,7 @@ jobs:
           esac
 
       - name: Upload build reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: build-reports-${{ matrix.module-group }}
@@ -166,7 +166,7 @@ jobs:
           ./gradlew :tests:integration-tests:test --parallel --build-cache --configuration-cache
 
       - name: Upload test reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: integration-test-reports
@@ -208,7 +208,7 @@ jobs:
           ./gradlew :tests:e2e-tests:test --parallel --build-cache --configuration-cache
 
       - name: Upload E2E test reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: e2e-test-reports
@@ -430,7 +430,7 @@ jobs:
           ./gradlew :tests:performance-tests:test --parallel --build-cache --configuration-cache
 
       - name: Upload performance test reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: performance-test-reports
