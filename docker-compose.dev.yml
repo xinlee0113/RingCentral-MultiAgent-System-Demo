@@ -1,0 +1,197 @@
+version: '3.8'
+
+services:
+  # 基础设施服务
+  postgres:
+    image: postgres:15
+    container_name: ringcentral-postgres
+    environment:
+      POSTGRES_DB: ringcentral_dev
+      POSTGRES_USER: ringcentral
+      POSTGRES_PASSWORD: dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ringcentral"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ringcentral-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: ringcentral-kafka
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: ringcentral-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  # 核心服务（使用本地构建的镜像）
+  api-gateway:
+    image: ringcentral/api-gateway:latest
+    container_name: ringcentral-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8080
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/ringcentral_dev
+      - DATABASE_USERNAME=ringcentral
+      - DATABASE_PASSWORD=dev_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  auth-service:
+    image: ringcentral/auth-service:latest
+    container_name: ringcentral-auth-service
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8080
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/ringcentral_dev
+      - DATABASE_USERNAME=ringcentral
+      - DATABASE_PASSWORD=dev_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  meeting-agent:
+    image: ringcentral/meeting-agent:latest
+    container_name: ringcentral-meeting-agent
+    ports:
+      - "8082:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8080
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/ringcentral_dev
+      - DATABASE_USERNAME=ringcentral
+      - DATABASE_PASSWORD=dev_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - API_GATEWAY_URL=http://api-gateway:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      api-gateway:
+        condition: service_healthy
+
+  call-agent:
+    image: ringcentral/call-agent:latest
+    container_name: ringcentral-call-agent
+    ports:
+      - "8083:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8080
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/ringcentral_dev
+      - DATABASE_USERNAME=ringcentral
+      - DATABASE_PASSWORD=dev_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - API_GATEWAY_URL=http://api-gateway:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      api-gateway:
+        condition: service_healthy
+
+  speech-engine:
+    image: ringcentral/speech-engine:latest
+    container_name: ringcentral-speech-engine
+    ports:
+      - "8084:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8080
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  nlu-engine:
+    image: ringcentral/nlu-engine:latest
+    container_name: ringcentral-nlu-engine
+    ports:
+      - "8085:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8080
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: ringcentral-network 

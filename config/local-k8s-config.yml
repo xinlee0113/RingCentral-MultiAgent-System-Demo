@@ -1,0 +1,89 @@
+# RingCentral MultiAgent System - 本地Kubernetes配置
+# 作者: RingCentral AI Team
+# 版本: 1.0.0
+
+# 基础配置
+namespace: ringcentral-dev
+version: latest
+registry: ringcentral
+
+# 服务配置
+services:
+  api-gateway:
+    image: ringcentral/api-gateway
+    port: 8080
+    replicas: 1
+    module: platform-services
+    
+  auth-service:
+    image: ringcentral/auth-service
+    port: 8080
+    replicas: 1
+    module: platform-services
+    
+  meeting-agent:
+    image: ringcentral/meeting-agent
+    port: 8080
+    replicas: 1
+    module: agent-services
+    
+  call-agent:
+    image: ringcentral/call-agent
+    port: 8080
+    replicas: 1
+    module: agent-services
+    
+  speech-engine:
+    image: ringcentral/speech-engine
+    port: 8080
+    replicas: 1
+    module: ai-engines
+    
+  nlu-engine:
+    image: ringcentral/nlu-engine
+    port: 8080
+    replicas: 1
+    module: ai-engines
+
+# 基础设施配置
+infrastructure:
+  postgres:
+    image: postgres:15
+    port: 5432
+    database: ringcentral_dev
+    username: ringcentral
+    password: dev_password
+    
+  redis:
+    image: redis:7-alpine
+    port: 6379
+    
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    port: 9092
+    
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    port: 2181
+
+# Ingress配置
+ingress:
+  class: nginx
+  domains:
+    api-gateway: dev-api.ringcentral.local
+    auth-service: dev-auth.ringcentral.local
+    meeting-agent: dev-meeting.ringcentral.local
+    call-agent: dev-call.ringcentral.local
+
+# 健康检查配置
+health:
+  initial_delay: 30
+  period: 10
+  timeout: 300
+
+# 本地域名配置
+hosts:
+  - "127.0.0.1 dev-api.ringcentral.local"
+  - "127.0.0.1 dev-auth.ringcentral.local"
+  - "127.0.0.1 dev-meeting.ringcentral.local"
+  - "127.0.0.1 dev-call.ringcentral.local" 

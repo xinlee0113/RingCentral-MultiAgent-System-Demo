@@ -1,0 +1,99 @@
+# PostgreSQL部署
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: ${NAMESPACE}
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: ${POSTGRES_IMAGE}
+        env:
+        - name: POSTGRES_DB
+          value: ${POSTGRES_DB}
+        - name: POSTGRES_USER
+          value: ${POSTGRES_USER}
+        - name: POSTGRES_PASSWORD
+          value: ${POSTGRES_PASSWORD}
+        ports:
+        - containerPort: ${POSTGRES_PORT}
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - ${POSTGRES_USER}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: postgres-storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: ${NAMESPACE}
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: ${POSTGRES_PORT}
+    targetPort: ${POSTGRES_PORT}
+---
+# Redis部署
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: ${NAMESPACE}
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: ${REDIS_IMAGE}
+        ports:
+        - containerPort: ${REDIS_PORT}
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: ${NAMESPACE}
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: ${REDIS_PORT}
+    targetPort: ${REDIS_PORT} 

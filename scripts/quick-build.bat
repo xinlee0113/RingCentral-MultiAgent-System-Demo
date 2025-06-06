@@ -1,0 +1,1 @@
+./gradlew build --parallel --max-workers=8 --configuration-cache --build-cache -x test --exclude-task sonarqube

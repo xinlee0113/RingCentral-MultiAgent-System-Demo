@@ -1,0 +1,439 @@
+name: RingCentral MultiAgent System CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '17'
+  GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4'
+
+jobs:
+  # 代码质量检查
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run code quality checks
+        run: |
+          ./gradlew spotlessCheck detekt --parallel --build-cache --configuration-cache
+
+  # 快速构建和单元测试
+  fast-build:
+    name: Fast Build & Unit Tests
+    runs-on: ubuntu-latest
+    needs: code-quality
+    strategy:
+      matrix:
+        module-group: [core, services, ai-engines, agents, tests]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build modules
+        run: |
+          case "${{ matrix.module-group }}" in
+            "core")
+              ./gradlew :shared:build :infrastructure:build --parallel --build-cache --configuration-cache
+              ;;
+            "services")
+              ./gradlew :platform-services:api-gateway:build :platform-services:auth-service:build :platform-services:config-service:build :platform-services:monitor-service:build --parallel --build-cache --configuration-cache
+              ;;
+            "ai-engines")
+              ./gradlew :ai-engines:speech-engine:build :ai-engines:nlu-engine:build :ai-engines:knowledge-engine:build :ai-engines:reasoning-engine:build --parallel --build-cache --configuration-cache
+              ;;
+            "agents")
+              ./gradlew :agent-services:meeting-agent:build :agent-services:call-agent:build :agent-services:router-agent:build :agent-services:analytics-agent:build --parallel --build-cache --configuration-cache
+              ;;
+            "tests")
+              ./gradlew :tests:unit-tests:build :tests:integration-tests:build :tests:e2e-tests:build :tests:performance-tests:build --parallel --build-cache --configuration-cache
+              ;;
+          esac
+
+      - name: Upload build reports
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: build-reports-${{ matrix.module-group }}
+          path: |
+            **/build/reports/
+            **/build/test-results/
+
+  # 集成测试
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: fast-build
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ringcentral_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run integration tests
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          DATABASE_URL: jdbc:postgresql://localhost:5432/ringcentral_test
+          REDIS_URL: redis://localhost:6379
+        run: |
+          ./gradlew :tests:integration-tests:test --parallel --build-cache --configuration-cache
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: integration-test-reports
+          path: |
+            tests/integration-tests/build/reports/
+            tests/integration-tests/build/test-results/
+
+  # 端到端测试
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run E2E tests
+        run: |
+          ./gradlew :tests:e2e-tests:test --parallel --build-cache --configuration-cache
+
+      - name: Upload E2E test reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-test-reports
+          path: |
+            tests/e2e-tests/build/reports/
+            tests/e2e-tests/build/test-results/
+
+  # 代码覆盖率和质量分析
+  sonar-analysis:
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build and analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          ./gradlew build jacocoTestReport sonarqube --parallel --build-cache --configuration-cache
+
+  # Docker镜像构建
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: fast-build
+    if: github.event_name == 'push'
+    strategy:
+      matrix:
+        service: [api-gateway, auth-service, meeting-agent, call-agent, speech-engine, nlu-engine]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Docker image
+        run: |
+          case "${{ matrix.service }}" in
+            "api-gateway"|"auth-service")
+              ./gradlew :platform-services:${{ matrix.service }}:jib --parallel --build-cache --configuration-cache
+              ;;
+            "meeting-agent"|"call-agent")
+              ./gradlew :agent-services:${{ matrix.service }}:jib --parallel --build-cache --configuration-cache
+              ;;
+            "speech-engine"|"nlu-engine")
+              ./gradlew :ai-engines:${{ matrix.service }}:jib --parallel --build-cache --configuration-cache
+              ;;
+          esac
+
+  # 部署到开发环境
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: [integration-tests, docker-build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    environment: development
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Setup Kubernetes config
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_DEV }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Deploy to development environment
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          NAMESPACE: ringcentral-dev
+          REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
+        run: |
+          chmod +x scripts/deploy-dev.sh
+          ./scripts/deploy-dev.sh
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n ringcentral-dev
+          kubectl get services -n ringcentral-dev
+          kubectl get ingress -n ringcentral-dev
+
+      - name: Get access URLs
+        run: |
+          echo "🌐 部署完成! 访问地址:"
+          echo "  API Gateway: http://dev-api.ringcentral.local"
+          echo "  Auth Service: http://dev-auth.ringcentral.local"
+          echo "  Meeting Agent: http://dev-meeting.ringcentral.local"
+          echo "  Call Agent: http://dev-call.ringcentral.local"
+
+  # 部署到生产环境
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [e2e-tests, sonar-analysis]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Setup Kubernetes config
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_PROD }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Deploy to production environment
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          NAMESPACE: ringcentral-prod
+          REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
+        run: |
+          chmod +x scripts/deploy-prod.sh
+          ./scripts/deploy-prod.sh
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n ringcentral-prod
+          kubectl get services -n ringcentral-prod
+          kubectl get ingress -n ringcentral-prod
+
+      - name: Send deployment notification
+        if: success()
+        run: |
+          echo "🎉 生产环境部署成功!"
+          echo "版本: ${{ github.sha }}"
+          echo "时间: $(date)"
+
+  # 性能测试
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run performance tests
+        run: |
+          ./gradlew :tests:performance-tests:test --parallel --build-cache --configuration-cache
+
+      - name: Upload performance test reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: performance-test-reports
+          path: |
+            tests/performance-tests/build/reports/
+            tests/performance-tests/build/test-results/ 

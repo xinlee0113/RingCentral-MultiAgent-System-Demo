@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 # 配置变量
 NAMESPACE="ringcentral-dev"
 DOCKER_REGISTRY="ringcentral"
-VERSION="1.0.0"
+VERSION=${GITHUB_SHA:-latest}
 KUBECONFIG_PATH="${KUBECONFIG:-$HOME/.kube/config}"
 
 # 日志函数
@@ -86,32 +86,32 @@ deploy_infrastructure() {
     
     # PostgreSQL
     log_info "部署PostgreSQL..."
-    cat <<EOF | kubectl apply -f -
+    kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgresql
+  name: postgres
   namespace: $NAMESPACE
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgresql
+      app: postgres
   template:
     metadata:
       labels:
-        app: postgresql
+        app: postgres
     spec:
       containers:
-      - name: postgresql
+      - name: postgres
         image: postgres:15
         env:
         - name: POSTGRES_DB
-          value: "ringcentral"
+          value: ringcentral_dev
         - name: POSTGRES_USER
-          value: "ringcentral"
+          value: ringcentral
         - name: POSTGRES_PASSWORD
-          value: "dev-password"
+          value: dev_password
         ports:
         - containerPort: 5432
         volumeMounts:
@@ -124,11 +124,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgresql
+  name: postgres
   namespace: $NAMESPACE
 spec:
   selector:
-    app: postgresql
+    app: postgres
   ports:
   - port: 5432
     targetPort: 5432
@@ -136,7 +136,7 @@ EOF
 
     # Redis
     log_info "部署Redis..."
-    cat <<EOF | kubectl apply -f -
+    kubectl apply -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -154,7 +154,7 @@ spec:
     spec:
       containers:
       - name: redis
-        image: redis:7-alpine
+        image: redis:7
         ports:
         - containerPort: 6379
 ---

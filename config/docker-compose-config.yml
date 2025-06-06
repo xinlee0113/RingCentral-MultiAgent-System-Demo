@@ -1,0 +1,84 @@
+# RingCentral MultiAgent System - Docker Compose配置
+# 作者: RingCentral AI Team
+# 版本: 1.0.0
+
+# 基础配置
+version: "3.8"
+network_name: ringcentral-network
+registry: ringcentral
+
+# 服务端口映射
+ports:
+  api-gateway: 8080
+  auth-service: 8081
+  meeting-agent: 8082
+  call-agent: 8083
+  speech-engine: 8084
+  nlu-engine: 8085
+  postgres: 5432
+  redis: 6379
+  kafka: 9092
+  zookeeper: 2181
+
+# 服务配置
+services:
+  api-gateway:
+    image: ringcentral/api-gateway:latest
+    module: platform-services
+    
+  auth-service:
+    image: ringcentral/auth-service:latest
+    module: platform-services
+    
+  meeting-agent:
+    image: ringcentral/meeting-agent:latest
+    module: agent-services
+    
+  call-agent:
+    image: ringcentral/call-agent:latest
+    module: agent-services
+    
+  speech-engine:
+    image: ringcentral/speech-engine:latest
+    module: ai-engines
+    
+  nlu-engine:
+    image: ringcentral/nlu-engine:latest
+    module: ai-engines
+
+# 基础设施配置
+infrastructure:
+  postgres:
+    image: postgres:15
+    database: ringcentral_dev
+    username: ringcentral
+    password: dev_password
+    
+  redis:
+    image: redis:7-alpine
+    
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    zookeeper_connect: zookeeper:2181
+    advertised_listeners: PLAINTEXT://localhost:9092
+    
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    client_port: 2181
+    tick_time: 2000
+
+# 环境变量
+environment:
+  spring_profiles: dev
+  database_url: jdbc:postgresql://postgres:5432/ringcentral_dev
+  redis_host: redis
+  kafka_servers: kafka:9092
+
+# 健康检查配置
+health_check:
+  postgres_test: "pg_isready -U ringcentral"
+  redis_test: "redis-cli ping"
+  app_path: "/actuator/health"
+  interval: 10s
+  timeout: 5s
+  retries: 5 
