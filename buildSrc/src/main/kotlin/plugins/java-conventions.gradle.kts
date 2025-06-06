@@ -92,32 +92,16 @@ sonar {
         
         // 项目信息
         property("sonar.projectName", "RingCentral MultiAgent System")
-        property("sonar.projectDescription", "RingCentral企业级AI智能体协同平台")
         property("sonar.projectVersion", project.version.toString())
         
         // Java配置
-        property("sonar.gradle.skipCompile", "true")
         property("sonar.java.source", "17")
         property("sonar.java.target", "17")
-        property("sonar.java.binaries", "${layout.buildDirectory.get()}/classes")
         
-        // 测试和覆盖率配置
-        property("sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml")
-        property("sonar.junit.reportPaths", "${layout.buildDirectory.get()}/test-results/test")
-        
-        // 源码配置
-        property("sonar.sources", "src/main")
-        property("sonar.tests", "src/test")
-        
-        // 排除配置 - 使用逗号分隔的字符串而不是多行字符串
-        property("sonar.exclusions", "**/generated/**,**/build/**,**/*.gradle.kts,**/gradle/**,**/gradlew*,**/.gradle/**,**/node_modules/**,**/target/**")
-        
-        // 测试排除 - 使用逗号分隔的字符串
-        property("sonar.test.exclusions", "**/test/**/*Test.java,**/test/**/*Tests.java,**/test/**/*IT.java")
+        // 基本排除配置
+        property("sonar.exclusions", "**/build/**,**/*.gradle.kts")
         
         // 代码质量配置
         property("sonar.qualitygate.wait", "true")
-        property("sonar.pullrequest.provider", "github")
-        property("sonar.pullrequest.github.repository", "xinlee0113/RingCentral-MultiAgent-System-Demo")
     }
 } 
