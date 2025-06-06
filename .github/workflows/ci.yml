@@ -43,7 +43,7 @@ jobs:
 
       - name: Run code quality checks
         run: |
-          ./gradlew spotlessCheck detekt --parallel --build-cache --configuration-cache
+          ./gradlew check --parallel --build-cache --configuration-cache
 
   # 快速构建和单元测试
   fast-build:
