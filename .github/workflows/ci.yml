@@ -321,12 +321,27 @@ jobs:
           # 运行构建和测试覆盖率报告
           ./gradlew build jacocoTestReport --parallel --build-cache --no-configuration-cache
           
-          # 检查SonarQube token是否存在
-          if [ -n "$SONAR_TOKEN" ] && [ "$SONAR_TOKEN" != "mock-token" ]; then
-            echo "Running SonarQube analysis..."
-            ./gradlew sonarqube --info --no-configuration-cache --stacktrace
+          # 检查SonarQube token是否存在并且有效
+          echo "Checking SONAR_TOKEN..."
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "❌ SONAR_TOKEN is not set, skipping SonarQube analysis"
+            exit 0
+          elif [ "$SONAR_TOKEN" = "mock-token" ]; then
+            echo "❌ SONAR_TOKEN is mock token, skipping SonarQube analysis"
+            exit 0
+          elif [ ${#SONAR_TOKEN} -lt 10 ]; then
+            echo "❌ SONAR_TOKEN appears to be invalid (too short), skipping SonarQube analysis"
+            exit 0
           else
-            echo "SonarQube token not configured or is mock token, skipping analysis"
+            echo "✅ SONAR_TOKEN is configured, running SonarQube analysis..."
+            echo "Token length: ${#SONAR_TOKEN}"
+            
+            # 运行SonarQube分析
+            ./gradlew sonarqube --info --no-configuration-cache --stacktrace \
+              -Dsonar.token="$SONAR_TOKEN" \
+              -Dsonar.host.url="https://sonarcloud.io" \
+              -Dsonar.projectKey="xinlee0113_RingCentral-MultiAgent-System-Demo" \
+              -Dsonar.organization="xinlee0113"
           fi
 
   # Docker镜像构建
