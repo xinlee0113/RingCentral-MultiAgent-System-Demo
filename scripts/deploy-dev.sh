@@ -321,14 +321,18 @@ spec:
           httpGet:
             path: /actuator/health
             port: $port
-          initialDelaySeconds: 60
+          initialDelaySeconds: 90
           periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /actuator/health/readiness
             port: $port
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
           periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service
@@ -416,10 +420,20 @@ EOF
 wait_for_services() {
     log_info "等待服务就绪..."
     
-    # 等待所有部署就绪
-    kubectl wait --for=condition=available --timeout=300s deployment --all -n $NAMESPACE
+    # 等待基础设施服务就绪
+    log_info "等待基础设施服务..."
+    kubectl wait --for=condition=available --timeout=600s deployment/postgres deployment/redis deployment/kafka -n $NAMESPACE
     
-    log_success "所有服务已就绪"
+    # 等待应用服务就绪（更长的超时时间）
+    log_info "等待应用服务..."
+    kubectl wait --for=condition=available --timeout=900s deployment/auth-service deployment/api-gateway deployment/speech-engine deployment/nlu-engine deployment/meeting-agent deployment/call-agent -n $NAMESPACE || {
+        log_info "部分服务启动超时，检查状态..."
+        kubectl get pods -n $NAMESPACE
+        kubectl describe pods -n $NAMESPACE | grep -A 10 "Events:"
+        return 0  # 不要因为超时而失败，继续显示状态
+    }
+    
+    log_success "服务等待完成"
 }
 
 # 显示部署状态

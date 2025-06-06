@@ -109,24 +109,11 @@ sonar {
         property("sonar.sources", "src/main")
         property("sonar.tests", "src/test")
         
-        // 排除配置
-        property("sonar.exclusions", """
-            **/generated/**,
-            **/build/**,
-            **/*.gradle.kts,
-            **/gradle/**,
-            **/gradlew*,
-            **/.gradle/**,
-            **/node_modules/**,
-            **/target/**
-        """.trimIndent())
+        // 排除配置 - 使用逗号分隔的字符串而不是多行字符串
+        property("sonar.exclusions", "**/generated/**,**/build/**,**/*.gradle.kts,**/gradle/**,**/gradlew*,**/.gradle/**,**/node_modules/**,**/target/**")
         
-        // 测试排除
-        property("sonar.test.exclusions", """
-            **/test/**/*Test.java,
-            **/test/**/*Tests.java,
-            **/test/**/*IT.java
-        """.trimIndent())
+        // 测试排除 - 使用逗号分隔的字符串
+        property("sonar.test.exclusions", "**/test/**/*Test.java,**/test/**/*Tests.java,**/test/**/*IT.java")
         
         // 代码质量配置
         property("sonar.qualitygate.wait", "true")
