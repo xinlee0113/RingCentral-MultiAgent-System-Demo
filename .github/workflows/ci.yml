@@ -316,16 +316,14 @@ jobs:
       - name: Build and analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN || 'mock-token' }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          # 如果没有配置SonarQube token，则跳过SonarQube分析
-          if [ -z "${{ secrets.SONAR_TOKEN }}" ]; then
-            echo "SonarQube token not configured, running build without SonarQube analysis"
-            ./gradlew build jacocoTestReport --parallel --build-cache --configuration-cache
-          else
-            echo "Running build with SonarQube analysis"
-            ./gradlew build jacocoTestReport sonarqube --parallel --build-cache --configuration-cache
-          fi
+          # 运行构建和测试覆盖率报告
+          ./gradlew build jacocoTestReport --parallel --build-cache --configuration-cache
+          
+          # 运行SonarQube分析
+          echo "Running SonarQube analysis..."
+          ./gradlew sonarqube --info
 
   # Docker镜像构建
   docker-build:
