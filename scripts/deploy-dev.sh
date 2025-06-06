@@ -17,9 +17,10 @@ NC='\033[0m' # No Color
 
 # 配置变量
 NAMESPACE="ringcentral-dev"
-DOCKER_REGISTRY="ringcentral"
-VERSION=${GITHUB_SHA:-latest}
+DOCKER_REGISTRY="${REGISTRY:-ghcr.io/xinlee0113/ringcentral-multiagent-system}"
+VERSION=${GITHUB_SHA:-1.0.0}
 KUBECONFIG_PATH="${KUBECONFIG:-$HOME/.kube/config}"
+USE_KIND="${USE_KIND:-false}"
 
 # 日志函数
 log_info() {
@@ -56,8 +57,15 @@ check_environment() {
     
     # 检查Kubernetes连接
     if ! kubectl cluster-info &> /dev/null; then
-        log_error "无法连接到Kubernetes集群，请检查kubeconfig"
-        exit 1
+        if [ "$USE_KIND" = "true" ]; then
+            log_warning "无法连接到Kubernetes集群，但USE_KIND=true，假设kind集群正在设置中..."
+        else
+            log_error "无法连接到Kubernetes集群，请检查kubeconfig"
+            exit 1
+        fi
+    else
+        log_success "成功连接到Kubernetes集群"
+        kubectl cluster-info
     fi
     
     # 检查Helm
@@ -222,17 +230,11 @@ EOF
 deploy_platform_services() {
     log_info "部署平台服务..."
     
-    # 配置服务
-    deploy_service "config-service" "8888"
-    
     # 认证服务
     deploy_service "auth-service" "8080"
     
     # API网关
     deploy_service "api-gateway" "8080"
-    
-    # 监控服务
-    deploy_service "monitor-service" "8080"
     
     log_success "平台服务部署完成"
 }
@@ -247,12 +249,6 @@ deploy_ai_engines() {
     # NLU引擎
     deploy_service "nlu-engine" "8080"
     
-    # 知识引擎
-    deploy_service "knowledge-engine" "8080"
-    
-    # 推理引擎
-    deploy_service "reasoning-engine" "8080"
-    
     log_success "AI引擎部署完成"
 }
 
@@ -265,12 +261,6 @@ deploy_agent_services() {
     
     # 通话智能体
     deploy_service "call-agent" "8080"
-    
-    # 路由智能体
-    deploy_service "router-agent" "8080"
-    
-    # 分析智能体
-    deploy_service "analytics-agent" "8080"
     
     log_success "智能体服务部署完成"
 }
@@ -311,11 +301,11 @@ spec:
         - name: SPRING_PROFILES_ACTIVE
           value: "dev"
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:postgresql://postgresql:5432/ringcentral"
+          value: "jdbc:postgresql://postgres:5432/ringcentral_dev"
         - name: SPRING_DATASOURCE_USERNAME
           value: "ringcentral"
         - name: SPRING_DATASOURCE_PASSWORD
-          value: "dev-password"
+          value: "dev_password"
         - name: SPRING_REDIS_HOST
           value: "redis"
         - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
@@ -389,18 +379,32 @@ spec:
             name: auth-service
             port:
               number: 8080
-      - path: /api/config
+      - path: /api/meeting
         pathType: Prefix
         backend:
           service:
-            name: config-service
+            name: meeting-agent
             port:
-              number: 8888
-      - path: /monitor
+              number: 8080
+      - path: /api/call
         pathType: Prefix
         backend:
           service:
-            name: monitor-service
+            name: call-agent
+            port:
+              number: 8080
+      - path: /api/speech
+        pathType: Prefix
+        backend:
+          service:
+            name: speech-engine
+            port:
+              number: 8080
+      - path: /api/nlu
+        pathType: Prefix
+        backend:
+          service:
+            name: nlu-engine
             port:
               number: 8080
 EOF
@@ -442,8 +446,10 @@ show_status() {
     echo "🔗 访问信息:"
     echo "- API网关: http://dev.ringcentral.local/api/gateway"
     echo "- 认证服务: http://dev.ringcentral.local/api/auth"
-    echo "- 配置服务: http://dev.ringcentral.local/api/config"
-    echo "- 监控服务: http://dev.ringcentral.local/monitor"
+    echo "- 会议智能体: http://dev.ringcentral.local/api/meeting"
+    echo "- 通话智能体: http://dev.ringcentral.local/api/call"
+    echo "- 语音引擎: http://dev.ringcentral.local/api/speech"
+    echo "- NLU引擎: http://dev.ringcentral.local/api/nlu"
     echo ""
     echo "💡 提示: 请确保在/etc/hosts中添加以下条目:"
     echo "127.0.0.1 dev.ringcentral.local"
