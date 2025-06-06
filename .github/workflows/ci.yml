@@ -293,36 +293,30 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Login to Docker Hub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image (tar format)
+      - name: Build and push Docker image
         run: |
           echo "Building Docker image for service: ${{ matrix.service }}"
           case "${{ matrix.service }}" in
             "api-gateway"|"auth-service")
               echo "Building platform service: ${{ matrix.service }}"
-              ./gradlew :platform-services:${{ matrix.service }}:jibBuildTar --info --no-parallel --no-build-cache --no-configuration-cache
+              ./gradlew :platform-services:${{ matrix.service }}:jib --info --no-parallel --no-build-cache --no-configuration-cache
               ;;
             "meeting-agent"|"call-agent")
               echo "Building agent service: ${{ matrix.service }}"
-              ./gradlew :agent-services:${{ matrix.service }}:jibBuildTar --info --no-parallel --no-build-cache --no-configuration-cache
+              ./gradlew :agent-services:${{ matrix.service }}:jib --info --no-parallel --no-build-cache --no-configuration-cache
               ;;
             "speech-engine"|"nlu-engine")
               echo "Building AI engine: ${{ matrix.service }}"
-              ./gradlew :ai-engines:${{ matrix.service }}:jibBuildTar --info --no-parallel --no-build-cache --no-configuration-cache
+              ./gradlew :ai-engines:${{ matrix.service }}:jib --info --no-parallel --no-build-cache --no-configuration-cache
               ;;
           esac
-
-      - name: Upload Docker images as artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-image-${{ matrix.service }}
-          path: |
-            **/build/jib-image.tar
 
   # 部署到开发环境
   deploy-dev:
