@@ -49,7 +49,7 @@ jib {
         }
     }
     to {
-        image = "ghcr.io/xinlee0113/ringcentral-multiagent-system-demo/${project.name}:${project.version}"
+        image = "ghcr.io/xinlee0113/ringcentral-multiagent-system/${project.name}:${project.version}"
         tags = setOf("latest", project.version.toString())
     }
     container {
