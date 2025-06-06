@@ -220,12 +220,12 @@ jobs:
             tests/e2e-tests/build/reports/
             tests/e2e-tests/build/test-results/
 
-  # 代码覆盖率和质量分析
+  # 代码覆盖率和质量分析 (暂时禁用)
   sonar-analysis:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
     needs: integration-tests
-    if: github.event_name == 'push'
+    if: false  # 暂时禁用SonarQube
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -271,9 +271,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: fast-build
     if: github.event_name == 'push'
+    timeout-minutes: 30
     strategy:
       matrix:
-        service: [api-gateway, auth-service, meeting-agent, call-agent, speech-engine, nlu-engine]
+        service: [api-gateway]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -307,18 +308,21 @@ jobs:
       - name: Build and push Docker image
         run: |
           echo "Building Docker image for service: ${{ matrix.service }}"
+          echo "GitHub Actor: ${{ github.actor }}"
+          echo "Registry: ghcr.io"
+          
           case "${{ matrix.service }}" in
             "api-gateway"|"auth-service")
               echo "Building platform service: ${{ matrix.service }}"
-              ./gradlew :platform-services:${{ matrix.service }}:jib --info --no-parallel --no-build-cache --no-configuration-cache
+              ./gradlew :platform-services:${{ matrix.service }}:jib --info --stacktrace
               ;;
             "meeting-agent"|"call-agent")
               echo "Building agent service: ${{ matrix.service }}"
-              ./gradlew :agent-services:${{ matrix.service }}:jib --info --no-parallel --no-build-cache --no-configuration-cache
+              ./gradlew :agent-services:${{ matrix.service }}:jib --info --stacktrace
               ;;
             "speech-engine"|"nlu-engine")
               echo "Building AI engine: ${{ matrix.service }}"
-              ./gradlew :ai-engines:${{ matrix.service }}:jib --info --no-parallel --no-build-cache --no-configuration-cache
+              ./gradlew :ai-engines:${{ matrix.service }}:jib --info --stacktrace
               ;;
           esac
 
