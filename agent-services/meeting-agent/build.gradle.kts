@@ -45,7 +45,7 @@ application {
 // Docker配置
 jib {
     to {
-        image = "ringcentral/meeting-agent:${project.version}"
+        image = "xinlee0113/meeting-agent:${project.version}"
     }
     container {
         mainClass = "com.ringcentral.agent.meeting.MeetingAgentApplication"

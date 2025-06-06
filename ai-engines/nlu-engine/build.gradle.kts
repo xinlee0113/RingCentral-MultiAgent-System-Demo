@@ -81,7 +81,7 @@ application {
 // Docker配置
 jib {
     to {
-        image = "ringcentral/nlu-engine:${project.version}"
+        image = "xinlee0113/nlu-engine:${project.version}"
     }
     container {
         mainClass = "com.ringcentral.ai.nlu.NluEngineApplication"

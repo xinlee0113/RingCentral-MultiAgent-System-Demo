@@ -32,7 +32,7 @@ application {
 // Docker配置
 jib {
     to {
-        image = "ringcentral/api-gateway:${project.version}"
+        image = "xinlee0113/api-gateway:${project.version}"
     }
     container {
         mainClass = "com.ringcentral.gateway.GatewayApplication"

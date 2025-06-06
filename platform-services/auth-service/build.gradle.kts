@@ -35,7 +35,7 @@ application {
 // Docker配置
 jib {
     to {
-        image = "ringcentral/auth-service:${project.version}"
+        image = "xinlee0113/auth-service:${project.version}"
     }
     container {
         mainClass = "com.ringcentral.auth.AuthServiceApplication"

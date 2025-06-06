@@ -40,7 +40,7 @@ application {
 // Docker配置
 jib {
     to {
-        image = "ringcentral/speech-engine:${project.version}"
+        image = "xinlee0113/speech-engine:${project.version}"
     }
     container {
         mainClass = "com.ringcentral.ai.speech.SpeechEngineApplication"

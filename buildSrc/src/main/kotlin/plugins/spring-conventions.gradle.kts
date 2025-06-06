@@ -49,7 +49,7 @@ jib {
         }
     }
     to {
-        image = "ringcentral/${project.name}:${project.version}"
+        image = "xinlee0113/${project.name}:${project.version}"
         tags = setOf("latest", project.version.toString())
     }
     container {

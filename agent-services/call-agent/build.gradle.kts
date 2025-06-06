@@ -46,7 +46,7 @@ application {
 // Docker配置
 jib {
     to {
-        image = "ringcentral/call-agent:${project.version}"
+        image = "xinlee0113/call-agent:${project.version}"
     }
     container {
         mainClass = "com.ringcentral.agent.call.CallAgentApplication"
