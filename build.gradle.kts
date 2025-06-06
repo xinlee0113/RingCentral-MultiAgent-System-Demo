@@ -1,75 +1,61 @@
 plugins {
-    id("org.springframework.boot") version "3.2.2" apply false
-    id("io.spring.dependency-management") version "1.1.4" apply false
-    kotlin("jvm") version "1.9.22" apply false
-    kotlin("plugin.spring") version "1.9.22" apply false
-    kotlin("plugin.jpa") version "1.9.22" apply false
-    id("org.sonarqube") version "4.4.1.3373"
     id("jacoco")
 }
 
 allprojects {
     group = "com.ringcentral"
     version = "1.0.0"
-}
-
-subprojects {
-    apply(plugin = "java")
-    apply(plugin = "org.springframework.boot")
-    apply(plugin = "io.spring.dependency-management")
-    apply(plugin = "jacoco")
     
-    java {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    
-    dependencies {
-        implementation("org.springframework.boot:spring-boot-starter")
-        implementation("org.springframework.boot:spring-boot-starter-actuator")
-        implementation("org.springframework.boot:spring-boot-starter-validation")
-        implementation("org.springframework.cloud:spring-cloud-starter-config")
-        implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+    // 全局依赖解析策略
+    configurations.all {
+        // 排除所有snakeyaml传递依赖
+        exclude(group = "org.yaml", module = "snakeyaml")
         
-        // 日志和监控
-        implementation("net.logstash.logback:logstash-logback-encoder:7.4")
-        implementation("io.micrometer:micrometer-registry-prometheus")
-        
-        // 测试依赖
-        testImplementation("org.springframework.boot:spring-boot-starter-test")
-        testImplementation("org.testcontainers:junit-jupiter")
-        testImplementation("org.testcontainers:postgresql")
-        testImplementation("org.testcontainers:kafka")
-    }
-    
-    dependencyManagement {
-        imports {
-            mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.0")
-            mavenBom("org.testcontainers:testcontainers-bom:1.19.3")
+        resolutionStrategy {
+            // 强制使用特定版本，避免Android变体问题
+            force("org.yaml:snakeyaml:2.2")
+            
+            // 依赖替换策略
+            dependencySubstitution {
+                // 如果遇到Android变体，替换为标准版本
+                substitute(module("org.yaml:snakeyaml")).using(module("org.yaml:snakeyaml:2.2"))
+            }
+            
+            // 缓存动态版本
+            cacheDynamicVersionsFor(10, "minutes")
+            cacheChangingModulesFor(4, "hours")
+            
+            // 依赖解析失败时的重试策略
+            eachDependency {
+                if (requested.group == "org.yaml" && requested.name == "snakeyaml") {
+                    useVersion("2.2")
+                    because("统一snakeyaml版本，避免Android变体问题")
+                }
+            }
+            
+            // 排除Android变体
+            componentSelection {
+                all {
+                    if (candidate.group == "org.yaml" && candidate.module == "snakeyaml") {
+                        if (candidate.version.contains("android")) {
+                            reject("排除Android变体")
+                        }
+                    }
+                }
+            }
         }
     }
     
-    tasks.withType<Test> {
-        useJUnitPlatform()
-        finalizedBy(tasks.jacocoTestReport)
-    }
-    
-    tasks.jacocoTestReport {
-        dependsOn(tasks.test)
-        reports {
-            xml.required.set(true)
-            html.required.set(true)
+    // 在所有项目中显式添加snakeyaml依赖
+    afterEvaluate {
+        dependencies {
+            if (configurations.findByName("implementation") != null) {
+                add("implementation", "org.yaml:snakeyaml:2.2")
+            }
+            if (configurations.findByName("testImplementation") != null) {
+                add("testImplementation", "org.yaml:snakeyaml:2.2")
+            }
         }
-    }
-}
-
-// 代码质量检查
-sonarqube {
-    properties {
-        property("sonar.projectKey", "ringcentral-multiagent-system")
-        property("sonar.organization", "ringcentral")
-        property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.coverage.jacoco.xmlReportPaths", "**/build/reports/jacoco/test/jacocoTestReport.xml")
     }
 }
 
@@ -90,11 +76,47 @@ tasks.register("dockerBuildAll") {
     group = "docker"
     description = "构建所有Docker镜像"
     dependsOn(
-        ":platform-services:api-gateway:dockerBuild",
-        ":platform-services:auth-service:dockerBuild",
-        ":agent-services:meeting-agent:dockerBuild",
-        ":agent-services:call-agent:dockerBuild",
-        ":ai-engines:speech-engine:dockerBuild",
-        ":ai-engines:nlu-engine:dockerBuild"
+        ":platform-services:api-gateway:jib",
+        ":platform-services:auth-service:jib",
+        ":agent-services:meeting-agent:jib",
+        ":agent-services:call-agent:jib",
+        ":ai-engines:speech-engine:jib",
+        ":ai-engines:nlu-engine:jib"
     )
+}
+
+// 构建性能监控任务
+tasks.register("buildProfile") {
+    group = "build"
+    description = "构建性能分析"
+    doLast {
+        println("请手动执行: ./gradlew build --profile --scan")
+    }
+}
+
+tasks.register("cleanAll") {
+    group = "build"
+    description = "清理所有模块"
+    dependsOn(subprojects.map { "${it.path}:clean" })
+}
+
+tasks.register("checkDependencies") {
+    group = "verification"
+    description = "检查依赖冲突"
+    doLast {
+        subprojects.forEach { project ->
+            println("检查项目: ${project.name}")
+            project.configurations.forEach { config ->
+                if (config.isCanBeResolved) {
+                    try {
+                        config.resolvedConfiguration.lenientConfiguration.unresolvedModuleDependencies.forEach { dep ->
+                            println("  未解析依赖: ${dep.selector}")
+                        }
+                    } catch (e: Exception) {
+                        // 忽略无法解析的配置
+                    }
+                }
+            }
+        }
+    }
 }

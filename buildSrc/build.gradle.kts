@@ -3,6 +3,13 @@ plugins {
 }
 
 repositories {
+    // 使用国内镜像源提升下载速度
+    maven("https://maven.aliyun.com/repository/gradle-plugin")
+    maven("https://maven.aliyun.com/repository/central")
+    maven("https://maven.aliyun.com/repository/spring")
+    maven("https://maven.aliyun.com/repository/spring-plugin")
+    
+    // 备用官方源
     gradlePluginPortal()
     mavenCentral()
 }

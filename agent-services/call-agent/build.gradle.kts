@@ -1,5 +1,6 @@
 plugins {
     id("spring-conventions")
+    application
 }
 
 dependencies {
@@ -8,33 +9,33 @@ dependencies {
     implementation(project(":infrastructure"))
     
     // Spring Boot Web
-    implementation(Dependencies.springBootStarterWeb)
-    implementation(Dependencies.springBootStarterWebsocket)
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.websocket)
     
-    // RingCentral SDK
-    implementation("com.ringcentral:ringcentral:3.0.0")
-    implementation("com.ringcentral:ringcentral-voice:1.0.0")
+    // RingCentral SDK - 暂时注释，依赖不存在
+    // implementation(libs.ringcentral)
+    // implementation(libs.ringcentral.voice)
     
     // AI引擎客户端
-    implementation(Dependencies.langchain4j)
-    implementation(Dependencies.openaiJava)
+    implementation(libs.langchain4j.core)
+    implementation(libs.openai.java)
     
     // 语音处理
-    implementation(Dependencies.nettyAll)
-    implementation("org.bytedeco:javacv-platform:1.5.9")
+    implementation(libs.netty.all)
+    implementation(libs.javacv.platform)
     
     // 实时通信
-    implementation(Dependencies.springKafka)
-    implementation(Dependencies.kafkaStreams)
+    implementation(libs.spring.kafka)
+    implementation(libs.kafka.streams)
     
     // 数据库 (通话记录)
-    implementation(Dependencies.springBootStarterData)
-    implementation(Dependencies.postgresql)
-    implementation(Dependencies.springBootStarterDataRedis)
+    implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.postgresql)
+    implementation(libs.spring.boot.starter.data.redis)
     
     // 测试依赖
-    testImplementation(Dependencies.testcontainersPostgresql)
-    testImplementation(Dependencies.testcontainersKafka)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.testcontainers.kafka)
 }
 
 // 应用配置

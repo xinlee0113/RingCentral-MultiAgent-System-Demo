@@ -16,19 +16,15 @@ dependencies {
     testImplementation(project(":agent-services:call-agent"))
     
     // 测试框架
-    testImplementation(Dependencies.junitJupiter)
-    testImplementation(Dependencies.mockitoCore)
-    testImplementation(Dependencies.mockitoJunit)
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation(libs.bundles.testing)
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.spring.security.test)
     
-    // 断言库
-    testImplementation("org.assertj:assertj-core:3.24.2")
-    testImplementation("org.hamcrest:hamcrest:2.2")
-    
-    // 测试工具
-    testImplementation("org.awaitility:awaitility:4.2.0")
-    testImplementation("com.github.tomakehurst:wiremock-jre8:2.35.1")
+    // 扩展测试工具
+    testImplementation(libs.assertj)
+    testImplementation(libs.hamcrest)
+    testImplementation(libs.awaitility)
+    testImplementation(libs.wiremock)
 }
 
 dependencyManagement {

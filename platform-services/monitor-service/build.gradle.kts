@@ -1,5 +1,6 @@
 plugins {
     id("spring-conventions")
+    application
 }
 
 dependencies {
@@ -8,24 +9,24 @@ dependencies {
     implementation(project(":infrastructure"))
     
     // Spring Boot Admin
-    implementation("de.codecentric:spring-boot-admin-starter-server:3.2.0")
-    implementation("de.codecentric:spring-boot-admin-server-ui:3.2.0")
+    implementation(libs.spring.boot.admin.server)
+    implementation(libs.spring.boot.admin.ui)
     
     // Spring Boot Web
-    implementation(Dependencies.springBootStarterWeb)
-    implementation(Dependencies.springBootStarterSecurity)
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.security)
     
     // 监控和指标
-    implementation(Dependencies.micrometerPrometheus)
-    implementation("io.micrometer:micrometer-tracing-bridge-brave")
-    implementation("io.zipkin.reporter2:zipkin-reporter-brave")
+    implementation(libs.micrometer.prometheus)
+    implementation(libs.micrometer.tracing.bridge.brave)
+    implementation(libs.zipkin.reporter.brave)
     
     // 数据库 (存储监控数据)
-    implementation(Dependencies.springBootStarterData)
-    implementation(Dependencies.postgresql)
+    implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.postgresql)
     
     // 测试依赖
-    testImplementation(Dependencies.testcontainersPostgresql)
+    testImplementation(libs.testcontainers.postgresql)
 }
 
 // 应用配置

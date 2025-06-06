@@ -1,7 +1,13 @@
 plugins {
-    id("java-conventions")
+    `java-library`
     id("org.springframework.boot") apply false
     id("io.spring.dependency-management")
+    id("jacoco")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 dependencies {
@@ -10,39 +16,39 @@ dependencies {
     
     // Spring Boot
     api("org.springframework.boot:spring-boot-starter")
-    api("org.springframework.boot:spring-boot-starter-data-jpa")
-    api("org.springframework.boot:spring-boot-starter-data-redis")
-    api("org.springframework.boot:spring-boot-starter-security")
-    api("org.springframework.cloud:spring-cloud-starter-config")
+    api(libs.spring.boot.starter.data.jpa)
+    api(libs.spring.boot.starter.data.redis)
+    api(libs.spring.boot.starter.security)
+    api(libs.spring.cloud.starter.config)
     
     // 数据库
-    api(Dependencies.postgresql)
-    api(Dependencies.redisLettuce)
-    api(Dependencies.hikariCP)
+    api(libs.postgresql)
+    api("io.lettuce:lettuce-core:6.3.1.RELEASE")
+    api("com.zaxxer:HikariCP:5.1.0")
     
     // 消息队列
-    api(Dependencies.springKafka)
-    api(Dependencies.kafkaClients)
-    api(Dependencies.kafkaStreams)
+    api(libs.spring.kafka)
+    api("org.apache.kafka:kafka-clients:3.6.1")
+    api("org.apache.kafka:kafka-streams:3.6.1")
     
     // AI/ML客户端
-    api(Dependencies.langchain4j)
-    api(Dependencies.langchain4jOpenai)
-    api(Dependencies.qdrantClient)
-    api(Dependencies.openaiJava)
+    api(libs.langchain4j.core)
+    api(libs.langchain4j.openai)
+    api("io.qdrant:client:1.7.0")
+    api(libs.openai.java)
     
     // 网络框架
-    api(Dependencies.nettyAll)
-    api(Dependencies.okhttp)
+    api(libs.netty.all)
+    api("com.squareup.okhttp3:okhttp:4.12.0")
     
     // 安全
-    implementation("org.springframework.security:spring-security-oauth2-client")
-    implementation("org.springframework.security:spring-security-oauth2-jose")
+    implementation(libs.spring.security.oauth2.client)
+    implementation(libs.spring.security.oauth2.jose)
     
     // 测试依赖
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation(Dependencies.testcontainersPostgresql)
-    testImplementation(Dependencies.testcontainersKafka)
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.testcontainers.kafka)
 }
 
 dependencyManagement {

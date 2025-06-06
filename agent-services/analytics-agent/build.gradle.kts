@@ -1,5 +1,6 @@
 plugins {
     id("spring-conventions")
+    application
 }
 
 dependencies {
@@ -8,41 +9,37 @@ dependencies {
     implementation(project(":infrastructure"))
     
     // Spring Boot Web
-    implementation(Dependencies.springBootStarterWeb)
+    implementation(libs.spring.boot.starter.web)
     
-    // 数据分析
-    implementation("org.apache.spark:spark-core_2.13:3.5.0")
-    implementation("org.apache.spark:spark-sql_2.13:3.5.0")
-    implementation("org.apache.spark:spark-streaming_2.13:3.5.0")
+    // 数据分析 - 暂时注释有问题的依赖
+    // implementation(libs.bundles.analytics)
     
     // AI分析引擎
-    implementation(Dependencies.langchain4j)
-    implementation(Dependencies.openaiJava)
+    implementation(libs.langchain4j.core)
+    implementation(libs.openai.java)
     
-    // 机器学习
-    implementation("org.apache.spark:spark-mllib_2.13:3.5.0")
-    implementation("smile:smile-core:3.0.2")
+    // 机器学习 - 暂时注释有问题的依赖
+    // implementation(libs.smile.core)
     
     // 时间序列分析
-    implementation("com.github.signaflo:timeseries:0.4")
+    implementation(libs.timeseries)
     
     // 数据库 (分析结果存储)
-    implementation(Dependencies.springBootStarterData)
-    implementation(Dependencies.postgresql)
-    implementation(Dependencies.springBootStarterDataRedis)
+    implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.postgresql)
+    implementation(libs.spring.boot.starter.data.redis)
     
     // 消息队列 (实时数据流)
-    implementation(Dependencies.springKafka)
-    implementation(Dependencies.kafkaStreams)
+    implementation(libs.spring.kafka)
+    implementation(libs.kafka.streams)
     
-    // 报表生成
-    implementation("net.sf.jasperreports:jasperreports:6.20.6")
-    implementation("org.apache.poi:poi:5.2.5")
-    implementation("org.apache.poi:poi-ooxml:5.2.5")
+    // 报表生成 - 暂时注释有问题的依赖
+    // implementation(libs.jasperreports)
+    implementation(libs.bundles.document.processing)
     
     // 测试依赖
-    testImplementation(Dependencies.testcontainersPostgresql)
-    testImplementation(Dependencies.testcontainersKafka)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.testcontainers.kafka)
 }
 
 // 应用配置

@@ -1,5 +1,6 @@
 plugins {
     id("spring-conventions")
+    application
 }
 
 dependencies {
@@ -19,8 +20,7 @@ dependencies {
     implementation(Dependencies.openaiJava)
     
     // 规则引擎 (路由规则)
-    implementation("org.drools:drools-core:8.44.0.Final")
-    implementation("org.drools:drools-compiler:8.44.0.Final")
+    implementation(libs.bundles.rules.engine)
     
     // 负载均衡和服务发现
     implementation(Dependencies.springCloudEureka)
@@ -32,7 +32,7 @@ dependencies {
     
     // 测试依赖
     testImplementation(Dependencies.testcontainersPostgresql)
-    testImplementation(Dependencies.wiremock)
+    testImplementation(libs.wiremock)
 }
 
 // 应用配置

@@ -1,5 +1,6 @@
 plugins {
     id("spring-conventions")
+    application
 }
 
 dependencies {
@@ -8,22 +9,22 @@ dependencies {
     implementation(project(":infrastructure"))
     
     // Spring Boot Web
-    implementation(Dependencies.springBootStarterWeb)
-    implementation(Dependencies.springBootStarterSecurity)
-    implementation(Dependencies.springBootStarterData)
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     
     // OAuth2 和 JWT
-    implementation("org.springframework.security:spring-security-oauth2-authorization-server")
-    implementation("org.springframework.security:spring-security-oauth2-resource-server")
-    implementation("org.springframework.security:spring-security-oauth2-jose")
+    implementation(libs.spring.security.oauth2.authorization.server)
+    implementation(libs.spring.security.oauth2.resource.server)
+    implementation(libs.spring.security.oauth2.jose)
     
     // 数据库
-    implementation(Dependencies.postgresql)
-    implementation(Dependencies.springBootStarterDataRedis)
+    implementation("org.postgresql:postgresql")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
     
     // 测试依赖
-    testImplementation("org.springframework.security:spring-security-test")
-    testImplementation(Dependencies.testcontainersPostgresql)
+    testImplementation(libs.spring.security.test)
+    testImplementation("org.testcontainers:postgresql")
 }
 
 // 应用配置

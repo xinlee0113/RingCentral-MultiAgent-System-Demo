@@ -1,3 +1,5 @@
+import java.time.Duration
+
 plugins {
     id("java-conventions")
     id("org.springframework.boot") apply false
@@ -22,29 +24,26 @@ dependencies {
     testImplementation(project(":agent-services:analytics-agent"))
     
     // E2E测试框架
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.rest-assured:rest-assured:5.4.0")
-    testImplementation("io.rest-assured:json-path:5.4.0")
-    testImplementation("io.rest-assured:xml-path:5.4.0")
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.rest.assured)
+    testImplementation(libs.rest.assured.json)
+    testImplementation(libs.rest.assured.xml)
     
     // Selenium WebDriver
-    testImplementation("org.seleniumhq.selenium:selenium-java:4.16.1")
-    testImplementation("io.github.bonigarcia:webdrivermanager:5.6.2")
+    testImplementation(libs.selenium)
+    testImplementation(libs.webdrivermanager)
     
     // Testcontainers (完整环境)
-    testImplementation(Dependencies.testcontainersJunit)
-    testImplementation(Dependencies.testcontainersPostgresql)
-    testImplementation(Dependencies.testcontainersKafka)
-    testImplementation("org.testcontainers:elasticsearch:1.19.3")
-    testImplementation("org.testcontainers:redis:1.19.3")
-    testImplementation("org.testcontainers:nginx:1.19.3")
+    testImplementation(libs.bundles.testcontainers.all)
+    testImplementation(libs.testcontainers.elasticsearch)
+    testImplementation(libs.testcontainers.nginx)
     
     // 测试工具
-    testImplementation("org.awaitility:awaitility:4.2.0")
-    testImplementation("com.github.tomakehurst:wiremock-jre8:2.35.1")
+    testImplementation(libs.awaitility)
+    testImplementation(libs.wiremock)
     
     // 测试数据生成
-    testImplementation("com.github.javafaker:javafaker:1.0.2")
+    testImplementation(libs.javafaker)
 }
 
 dependencyManagement {

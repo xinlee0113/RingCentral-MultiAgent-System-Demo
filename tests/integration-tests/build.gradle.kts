@@ -1,3 +1,5 @@
+import java.time.Duration
+
 plugins {
     id("java-conventions")
     id("org.springframework.boot") apply false
@@ -17,23 +19,20 @@ dependencies {
     
     // Spring Boot测试
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation(libs.spring.security.test)
     testImplementation("org.springframework.cloud:spring-cloud-starter-contract-verifier")
     
     // Testcontainers
-    testImplementation(Dependencies.testcontainersJunit)
-    testImplementation(Dependencies.testcontainersPostgresql)
-    testImplementation(Dependencies.testcontainersKafka)
-    testImplementation("org.testcontainers:elasticsearch:1.19.3")
-    testImplementation("org.testcontainers:redis:1.19.3")
+    testImplementation(libs.bundles.testcontainers.all)
+    testImplementation(libs.testcontainers.elasticsearch)
     
     // 网络测试
-    testImplementation(Dependencies.wiremock)
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    testImplementation(libs.wiremock)
+    testImplementation(libs.okhttp.mockwebserver)
     
     // 测试工具
-    testImplementation("org.awaitility:awaitility:4.2.0")
-    testImplementation("io.rest-assured:rest-assured:5.4.0")
+    testImplementation(libs.awaitility)
+    testImplementation(libs.rest.assured)
 }
 
 dependencyManagement {

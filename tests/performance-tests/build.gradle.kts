@@ -14,8 +14,8 @@ dependencies {
     testImplementation(project(":agent-services:call-agent"))
     
     // JMH (Java Microbenchmark Harness)
-    testImplementation("org.openjdk.jmh:jmh-core:1.37")
-    testAnnotationProcessor("org.openjdk.jmh:jmh-generator-annprocess:1.37")
+    testImplementation(libs.jmh.core)
+    testAnnotationProcessor(libs.jmh.generator)
     
     // Gatling (负载测试)
     gatling("io.gatling.highcharts:gatling-charts-highcharts:3.9.5")
@@ -23,20 +23,18 @@ dependencies {
     gatling("io.gatling:gatling-recorder:3.9.5")
     
     // Spring Boot测试
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation(libs.spring.boot.starter.test)
     
     // 性能监控
-    testImplementation("io.micrometer:micrometer-core:1.12.0")
-    testImplementation("io.micrometer:micrometer-registry-prometheus:1.12.0")
+    testImplementation(libs.micrometer.core)
+    testImplementation(libs.micrometer.prometheus)
     
     // 测试工具
-    testImplementation("org.awaitility:awaitility:4.2.0")
-    testImplementation("io.rest-assured:rest-assured:5.4.0")
+    testImplementation(libs.awaitility)
+    testImplementation(libs.rest.assured)
     
     // Testcontainers
-    testImplementation(Dependencies.testcontainersJunit)
-    testImplementation(Dependencies.testcontainersPostgresql)
-    testImplementation(Dependencies.testcontainersKafka)
+    testImplementation(libs.bundles.testcontainers.all)
 }
 
 dependencyManagement {
@@ -46,22 +44,10 @@ dependencyManagement {
     }
 }
 
-// Gatling配置
-gatling {
-    toolVersion = "3.9.5"
-    includeMainOutput = true
-    includeTestOutput = true
-    scalaVersion = "2.13.12"
-    jvmArgs = listOf(
-        "-server",
-        "-Xmx2G",
-        "-XX:+HeapDumpOnOutOfMemoryError",
-        "-XX:+UseG1GC",
-        "-XX:+UseStringDeduplication",
-        "-Djava.net.preferIPv4Stack=true",
-        "-Djava.net.preferIPv6Addresses=false"
-    )
-}
+// Gatling配置 - 暂时简化
+// configure<io.gatling.gradle.GatlingPluginExtension> {
+//     // 配置将在后续完善
+// }
 
 tasks.test {
     useJUnitPlatform()

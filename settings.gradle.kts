@@ -43,9 +43,36 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        // 优先使用官方Maven Central，确保依赖完整性
         mavenCentral()
         gradlePluginPortal()
-        maven { url = uri("https://repo.spring.io/milestone") }
-        maven { url = uri("https://packages.confluent.io/maven/") }
+        
+        // Spring官方仓库
+        maven { 
+            url = uri("https://repo.spring.io/milestone")
+            name = "Spring Milestone"
+        }
+        maven { 
+            url = uri("https://repo.spring.io/snapshot")
+            name = "Spring Snapshot"
+        }
+        
+        // Confluent仓库（Kafka相关）
+        maven { 
+            url = uri("https://packages.confluent.io/maven/")
+            name = "Confluent"
+        }
+        
+        // 阿里云镜像作为备用（放在最后）
+        maven { 
+            url = uri("https://maven.aliyun.com/repository/central")
+            name = "Aliyun Central"
+        }
+        maven { 
+            url = uri("https://maven.aliyun.com/repository/spring")
+            name = "Aliyun Spring"
+        }
     }
+    
+
 }

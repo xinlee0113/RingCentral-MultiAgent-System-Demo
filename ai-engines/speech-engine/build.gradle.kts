@@ -1,5 +1,6 @@
 plugins {
     id("spring-conventions")
+    application
 }
 
 dependencies {
@@ -8,27 +9,27 @@ dependencies {
     implementation(project(":infrastructure"))
     
     // Spring Boot Web
-    implementation(Dependencies.springBootStarterWeb)
-    implementation(Dependencies.springBootStarterWebsocket)
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.websocket)
     
     // Netty (高性能网络处理)
-    implementation(Dependencies.nettyAll)
-    implementation(Dependencies.nettyTransportNativeEpoll)
+    implementation(libs.netty.all)
+    implementation(libs.netty.transport.native.epoll)
     
     // 语音处理
-    implementation("org.bytedeco:javacv-platform:1.5.9")
-    implementation("org.bytedeco:ffmpeg-platform:6.0-1.5.9")
+    implementation(libs.javacv.platform)
+    implementation(libs.ffmpeg.platform)
     
     // AI语音服务集成
-    implementation(Dependencies.openaiJava)
-    implementation("com.azure:azure-cognitiveservices-speech:1.34.0")
+    implementation(libs.openai.java)
+    // implementation("com.azure:azure-cognitiveservices-speech:1.34.0") // 暂时注释，需要添加Azure仓库
     
     // 消息队列 (实时语音流)
-    implementation(Dependencies.springKafka)
-    implementation(Dependencies.kafkaStreams)
+    implementation(libs.spring.kafka)
+    implementation(libs.kafka.streams)
     
     // 测试依赖
-    testImplementation(Dependencies.testcontainersKafka)
+    testImplementation(libs.testcontainers.kafka)
 }
 
 // 应用配置

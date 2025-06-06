@@ -1,5 +1,6 @@
 plugins {
     id("spring-conventions")
+    application
 }
 
 dependencies {
@@ -8,34 +9,34 @@ dependencies {
     implementation(project(":infrastructure"))
     
     // Spring Boot Web
-    implementation(Dependencies.springBootStarterWeb)
+    implementation(libs.spring.boot.starter.web)
     
     // qDrant向量数据库
-    implementation(Dependencies.qdrantClient)
-    implementation("io.grpc:grpc-netty-shaded:1.59.0")
-    implementation("io.grpc:grpc-protobuf:1.59.0")
-    implementation("io.grpc:grpc-stub:1.59.0")
+    implementation("io.qdrant:client:1.7.0") // 暂未加入版本目录
+    implementation(libs.grpc.netty.shaded)
+    implementation(libs.grpc.protobuf)
+    implementation(libs.grpc.stub)
     
     // LangChain4j (向量嵌入)
-    implementation(Dependencies.langchain4j)
-    implementation(Dependencies.langchain4jOpenai)
-    implementation("dev.langchain4j:langchain4j-embeddings-all-minilm-l6-v2:${Versions.langchain4j}")
+    implementation(libs.langchain4j.core)
+    implementation(libs.langchain4j.openai)
+    implementation("dev.langchain4j:langchain4j-embeddings-all-minilm-l6-v2:${libs.versions.langchain4j.get()}")
     
     // LlamaIndex集成
-    implementation("ai.djl:api:0.25.0")
-    implementation("ai.djl.huggingface:tokenizers:0.25.0")
+    implementation(libs.djl.api)
+    implementation(libs.djl.tokenizers)
     
     // 文档处理
-    implementation("org.apache.tika:tika-core:2.9.1")
-    implementation("org.apache.tika:tika-parsers-standard-package:2.9.1")
-    implementation("org.apache.pdfbox:pdfbox:3.0.1")
+    implementation(libs.apache.tika.core)
+    implementation(libs.apache.tika.parsers)
+    implementation(libs.apache.pdfbox)
     
     // 数据库 (元数据存储)
-    implementation(Dependencies.springBootStarterData)
-    implementation(Dependencies.postgresql)
+    implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.postgresql)
     
     // 测试依赖
-    testImplementation(Dependencies.testcontainersPostgresql)
+    testImplementation(libs.testcontainers.postgresql)
 }
 
 // 应用配置

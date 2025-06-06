@@ -1,27 +1,33 @@
 plugins {
-    id("java-conventions")
+    `java-library`
     id("org.springframework.boot") apply false
     id("io.spring.dependency-management")
+    id("jacoco")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 dependencies {
     // Spring Boot基础依赖
-    api("org.springframework.boot:spring-boot-starter")
-    api("org.springframework.boot:spring-boot-starter-validation")
-    api("org.springframework.boot:spring-boot-starter-actuator")
+    api(libs.spring.boot.starter.web)
+    api(libs.spring.boot.starter.actuator)
+    api(libs.spring.boot.starter.validation)
     
     // JSON处理
-    api(Dependencies.jacksonCore)
-    api(Dependencies.jacksonDatabind)
-    api(Dependencies.jacksonKotlin)
+    api(libs.jackson.core)
+    api(libs.jackson.databind)
+    api("com.fasterxml.jackson.module:jackson-module-kotlin")
     
     // 工具库
-    api(Dependencies.lombok)
-    api(Dependencies.mapstruct)
-    annotationProcessor(Dependencies.mapstructProcessor)
+    api("org.projectlombok:lombok:1.18.30")
+    api("org.mapstruct:mapstruct:1.5.5.Final")
+    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
     
     // 测试依赖
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation(libs.spring.boot.starter.test)
 }
 
 dependencyManagement {

@@ -16,47 +16,47 @@ object Dependencies {
     const val springCloudLoadBalancer = "org.springframework.cloud:spring-cloud-starter-loadbalancer"
     
     // 数据库驱动
-    const val postgresql = "org.postgresql:postgresql:${Versions.postgresql}"
-    const val redisLettuce = "io.lettuce:lettuce-core:${Versions.redis}"
-    const val hikariCP = "com.zaxxer:HikariCP:${Versions.hikariCP}"
+    const val postgresql = "org.postgresql:postgresql"
+    const val redisLettuce = "io.lettuce:lettuce-core"
+    const val hikariCP = "com.zaxxer:HikariCP"
     
     // 消息队列
-    const val kafkaClients = "org.apache.kafka:kafka-clients:${Versions.kafka}"
-    const val kafkaStreams = "org.apache.kafka:kafka-streams:${Versions.kafkaStreams}"
+    const val kafkaClients = "org.apache.kafka:kafka-clients"
+    const val kafkaStreams = "org.apache.kafka:kafka-streams"
     const val springKafka = "org.springframework.kafka:spring-kafka"
     
     // AI/ML集成
-    const val langchain4j = "dev.langchain4j:langchain4j:${Versions.langchain4j}"
-    const val langchain4jOpenai = "dev.langchain4j:langchain4j-open-ai:${Versions.langchain4j}"
-    const val qdrantClient = "io.qdrant:client:${Versions.qdrant}"
-    const val openaiJava = "com.theokanning.openai-gpt3-java:service:${Versions.openai}"
+    const val langchain4j = "dev.langchain4j:langchain4j"
+    const val langchain4jOpenai = "dev.langchain4j:langchain4j-open-ai"
+    const val qdrantClient = "io.qdrant:client"
+    const val openaiJava = "com.theokanning.openai-gpt3-java:service"
     
     // 网络框架
-    const val nettyAll = "io.netty:netty-all:${Versions.netty}"
-    const val nettyTransportNativeEpoll = "io.netty:netty-transport-native-epoll:${Versions.netty}"
-    const val okhttp = "com.squareup.okhttp3:okhttp:${Versions.okhttp}"
+    const val nettyAll = "io.netty:netty-all"
+    const val nettyTransportNativeEpoll = "io.netty:netty-transport-native-epoll"
+    const val okhttp = "com.squareup.okhttp3:okhttp"
     
     // JSON处理
-    const val jacksonCore = "com.fasterxml.jackson.core:jackson-core:${Versions.jackson}"
-    const val jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind:${Versions.jackson}"
-    const val jacksonKotlin = "com.fasterxml.jackson.module:jackson-module-kotlin:${Versions.jackson}"
+    const val jacksonCore = "com.fasterxml.jackson.core:jackson-core"
+    const val jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind"
+    const val jacksonKotlin = "com.fasterxml.jackson.module:jackson-module-kotlin"
     
     // 工具库
-    const val lombok = "org.projectlombok:lombok:${Versions.lombok}"
-    const val mapstruct = "org.mapstruct:mapstruct:${Versions.mapstruct}"
-    const val mapstructProcessor = "org.mapstruct:mapstruct-processor:${Versions.mapstruct}"
+    const val lombok = "org.projectlombok:lombok"
+    const val mapstruct = "org.mapstruct:mapstruct"
+    const val mapstructProcessor = "org.mapstruct:mapstruct-processor"
     
     // 测试依赖
-    const val junitJupiter = "org.junit.jupiter:junit-jupiter:${Versions.junit}"
-    const val mockitoCore = "org.mockito:mockito-core:${Versions.mockito}"
-    const val mockitoJunit = "org.mockito:mockito-junit-jupiter:${Versions.mockito}"
-    const val testcontainersJunit = "org.testcontainers:junit-jupiter:${Versions.testcontainers}"
-    const val testcontainersPostgresql = "org.testcontainers:postgresql:${Versions.testcontainers}"
-    const val testcontainersKafka = "org.testcontainers:kafka:${Versions.testcontainers}"
-    const val wiremock = "com.github.tomakehurst:wiremock-jre8:${Versions.wiremock}"
+    const val junitJupiter = "org.junit.jupiter:junit-jupiter"
+    const val mockitoCore = "org.mockito:mockito-core"
+    const val mockitoJunit = "org.mockito:mockito-junit-jupiter"
+    const val testcontainersJunit = "org.testcontainers:junit-jupiter"
+    const val testcontainersPostgresql = "org.testcontainers:postgresql"
+    const val testcontainersKafka = "org.testcontainers:kafka"
+    const val wiremock = "com.github.tomakehurst:wiremock-jre8"
     
     // 监控和日志
-    const val micrometerPrometheus = "io.micrometer:micrometer-registry-prometheus:${Versions.micrometer}"
-    const val logstashEncoder = "net.logstash.logback:logstash-logback-encoder:7.4"
-    const val slf4jApi = "org.slf4j:slf4j-api:${Versions.slf4j}"
+    const val micrometerPrometheus = "io.micrometer:micrometer-registry-prometheus"
+    const val logstashEncoder = "net.logstash.logback:logstash-logback-encoder"
+    const val slf4jApi = "org.slf4j:slf4j-api"
 } 

@@ -13,8 +13,8 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
     
     // 监控和日志
-    implementation("net.logstash.logback:logstash-logback-encoder")
-    implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.12.2")
     
     // 开发工具
     developmentOnly("org.springframework.boot:spring-boot-devtools")

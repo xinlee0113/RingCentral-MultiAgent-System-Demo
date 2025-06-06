@@ -1,5 +1,6 @@
 plugins {
     id("spring-conventions")
+    application
 }
 
 dependencies {
@@ -8,19 +9,19 @@ dependencies {
     implementation(project(":infrastructure"))
     
     // Spring Cloud Gateway
-    implementation(Dependencies.springCloudGateway)
-    implementation(Dependencies.springCloudLoadBalancer)
+    implementation("org.springframework.cloud:spring-cloud-starter-gateway")
+    implementation("org.springframework.cloud:spring-cloud-starter-loadbalancer")
     
     // Spring Boot WebFlux (Gateway需要)
-    implementation(Dependencies.springBootStarterWebflux)
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-security")
     
     // Redis (限流和缓存)
-    implementation(Dependencies.springBootStarterDataRedis)
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
     
     // 测试依赖
     testImplementation("org.springframework.cloud:spring-cloud-starter-contract-stub-runner")
-    testImplementation(Dependencies.wiremock)
+    testImplementation(libs.wiremock)
 }
 
 // 应用配置

@@ -1,5 +1,6 @@
 plugins {
     id("spring-conventions")
+    application
 }
 
 dependencies {
@@ -16,7 +17,7 @@ dependencies {
     implementation(Dependencies.springBootStarterSecurity)
     
     // Git支持
-    implementation("org.eclipse.jgit:org.eclipse.jgit:6.7.0.202309050840-r")
+    implementation(libs.jgit)
     
     // 测试依赖
     testImplementation("org.springframework.cloud:spring-cloud-config-server")

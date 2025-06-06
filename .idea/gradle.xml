@@ -1,10 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$PROJECT_DIR$/buildSrc" name="buildSrc">
+                <projects>
+                  <project path="$PROJECT_DIR$/buildSrc" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleHome" value="" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/agent-services" />
+            <option value="$PROJECT_DIR$/agent-services/analytics-agent" />
+            <option value="$PROJECT_DIR$/agent-services/call-agent" />
+            <option value="$PROJECT_DIR$/agent-services/meeting-agent" />
+            <option value="$PROJECT_DIR$/agent-services/router-agent" />
+            <option value="$PROJECT_DIR$/ai-engines" />
+            <option value="$PROJECT_DIR$/ai-engines/knowledge-engine" />
+            <option value="$PROJECT_DIR$/ai-engines/nlu-engine" />
+            <option value="$PROJECT_DIR$/ai-engines/reasoning-engine" />
+            <option value="$PROJECT_DIR$/ai-engines/speech-engine" />
+            <option value="$PROJECT_DIR$/buildSrc" />
+            <option value="$PROJECT_DIR$/infrastructure" />
+            <option value="$PROJECT_DIR$/platform-services" />
+            <option value="$PROJECT_DIR$/platform-services/api-gateway" />
+            <option value="$PROJECT_DIR$/platform-services/auth-service" />
+            <option value="$PROJECT_DIR$/platform-services/config-service" />
+            <option value="$PROJECT_DIR$/platform-services/monitor-service" />
+            <option value="$PROJECT_DIR$/shared" />
+            <option value="$PROJECT_DIR$/tests" />
+            <option value="$PROJECT_DIR$/tests/e2e-tests" />
+            <option value="$PROJECT_DIR$/tests/integration-tests" />
+            <option value="$PROJECT_DIR$/tests/performance-tests" />
+            <option value="$PROJECT_DIR$/tests/unit-tests" />
+          </set>
+        </option>
       </GradleProjectSettings>
     </option>
   </component>
