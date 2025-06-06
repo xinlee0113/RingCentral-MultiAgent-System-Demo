@@ -301,15 +301,19 @@ jobs:
 
       - name: Build and push Docker image
         run: |
+          echo "Building Docker image for service: ${{ matrix.service }}"
           case "${{ matrix.service }}" in
             "api-gateway"|"auth-service")
-              ./gradlew :platform-services:${{ matrix.service }}:jib --parallel --build-cache --configuration-cache
+              echo "Building platform service: ${{ matrix.service }}"
+              ./gradlew :platform-services:${{ matrix.service }}:jib --info --no-parallel --no-build-cache --no-configuration-cache
               ;;
             "meeting-agent"|"call-agent")
-              ./gradlew :agent-services:${{ matrix.service }}:jib --parallel --build-cache --configuration-cache
+              echo "Building agent service: ${{ matrix.service }}"
+              ./gradlew :agent-services:${{ matrix.service }}:jib --info --no-parallel --no-build-cache --no-configuration-cache
               ;;
             "speech-engine"|"nlu-engine")
-              ./gradlew :ai-engines:${{ matrix.service }}:jib --parallel --build-cache --configuration-cache
+              echo "Building AI engine: ${{ matrix.service }}"
+              ./gradlew :ai-engines:${{ matrix.service }}:jib --info --no-parallel --no-build-cache --no-configuration-cache
               ;;
           esac
 
