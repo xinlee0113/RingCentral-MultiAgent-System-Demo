@@ -85,23 +85,16 @@ tasks.jacocoTestCoverageVerification {
 // SonarQube/SonarCloud配置
 sonar {
     properties {
-        // SonarCloud项目配置
+        // 基本SonarCloud配置
         property("sonar.projectKey", "xinlee0113_RingCentral-MultiAgent-System-Demo")
         property("sonar.organization", "xinlee0113")
         property("sonar.host.url", "https://sonarcloud.io")
         
-        // 项目信息
+        // 基本项目信息
         property("sonar.projectName", "RingCentral MultiAgent System")
-        property("sonar.projectVersion", project.version.toString())
         
-        // Java配置
+        // Java版本
         property("sonar.java.source", "17")
         property("sonar.java.target", "17")
-        
-        // 基本排除配置
-        property("sonar.exclusions", "**/build/**,**/*.gradle.kts")
-        
-        // 代码质量配置
-        property("sonar.qualitygate.wait", "true")
     }
 } 
