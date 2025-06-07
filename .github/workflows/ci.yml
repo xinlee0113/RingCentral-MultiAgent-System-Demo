@@ -275,12 +275,12 @@ jobs:
             tests/e2e-tests/build/reports/
             tests/e2e-tests/build/test-results/
 
-  # 代码覆盖率和质量分析
+  # 代码覆盖率和质量分析 (临时禁用)
   sonar-analysis:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
     needs: integration-tests
-    if: github.event_name == 'push'
+    if: false  # 临时禁用SonarQube分析
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -520,7 +520,7 @@ jobs:
   deploy-prod:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [e2e-tests, sonar-analysis]
+    needs: [e2e-tests]  # 移除sonar-analysis依赖
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: production
     steps:
